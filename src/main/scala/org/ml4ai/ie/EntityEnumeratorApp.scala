@@ -19,7 +19,7 @@ object EntityEnumeratorApp extends App {
 
   println("Loading the annotated documents ...")
   val extractions =
-    for(s <- documents) yield {
+    for(s <- documents.par) yield {
       val doc = loader(s)
 
       // extract mentions from annotated document
@@ -45,7 +45,7 @@ object EntityEnumeratorApp extends App {
   println("Writing out file")
   using(new FileWriter(entityListPath)){
     writer =>
-      allEntities foreach {
+      allEntities.seq foreach {
         case (text, label) =>
           writer.write(s"$text\t$label\n")
       }
