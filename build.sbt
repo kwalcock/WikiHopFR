@@ -17,6 +17,7 @@ lazy val root = (project in file(".")).
       "org.clulab" %% "processors-modelsmain" % "7.4.2",
       "org.clulab" %% "processors-corenlp" % "7.4.2",
       "org.clulab" %% "processors-modelscorenlp" % "7.4.2",
+      "org.clulab" %% "processors-odin" % "7.4.2",
       "com.typesafe" % "config" % "1.3.3",
       "org.apache.lucene" % "lucene-core" % "7.6.0",
       "org.apache.lucene" % "lucene-analyzers-common" % "7.6.0",
