@@ -1,0 +1,18 @@
+# Relations grammar
+
+- name: "SimpleSubjObj1"
+  label: SimpleRelation
+  priority: ${rulepriority}
+  pattern: |
+    trigger = [tag=/VB/]
+    subject:Entity = nsubj
+    object:Entity = dobj
+
+
+- name: "SimplePrepositional"
+  label: PrepositionalRelation
+  priority: ${rulepriority}
+  pattern: |
+    trigger = [tag=/VB/]
+    subject:Entity = nsubj
+    object:Entity = dobj nmod:of

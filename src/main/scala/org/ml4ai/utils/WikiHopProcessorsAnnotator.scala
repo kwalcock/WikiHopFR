@@ -1,11 +1,9 @@
 package org.ml4ai.utils
 
 import java.io.{File, FileWriter, PrintWriter}
-import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigObject}
-import org.clulab.processors.clu.CluProcessor
 import org.clulab.processors.fastnlp.FastNLPProcessor
 import org.clulab.serialization.DocumentSerializer
 
@@ -13,7 +11,7 @@ import scala.io.Source
 import scala.util.{Failure, Try}
 import scala.util.matching.Regex.Match
 
-class WikiHopAnnotator(config:Config, documents:Iterable[String]){
+class WikiHopProcessorsAnnotator(config:Config, documents:Iterable[String]){
 
 
   private val annotationsPath = config.getString("files.annotationsFile")
@@ -38,7 +36,7 @@ class WikiHopAnnotator(config:Config, documents:Iterable[String]){
   println(documents.size)
   println(alreadyAnnotated.size)
 
-  val processor = new FastNLPProcessor()
+  val processor = new FastNLPProcessor(withRelationExtraction = true)
   val serializer = new DocumentSerializer()
 
   val writer = new PrintWriter(new FileWriter(file, true))
@@ -64,7 +62,9 @@ class WikiHopAnnotator(config:Config, documents:Iterable[String]){
           save(output, writer)
         }
       } match {
-        case Failure(_) => println(s"Problematic document: $d")
+        case Failure(e) =>
+          //println(e)
+          println(s"Problematic document: $d")
         case _ => ()
       }
 
@@ -80,9 +80,9 @@ class WikiHopAnnotator(config:Config, documents:Iterable[String]){
   writer.close()
 }
 
-object WikiHopAnnotator extends App {
+object WikiHopProcessorsAnnotator extends App {
   val config = ConfigFactory.load()
   val sentences = WikiHopParser.allDocuments
 
-  val annotator = new WikiHopAnnotator(config, sentences)
+  val annotator = new WikiHopProcessorsAnnotator(config, sentences)
 }

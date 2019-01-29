@@ -6,7 +6,7 @@ import org.ml4ai.utils.WikiHopLoader
 
 import scala.io.Source
 
-class IEEngine {
+class OdinEngine {
 
   // read rules from general-rules.yml file in resources
   private val source = Source.fromURL(getClass.getResource("/grammars/master.yml"))

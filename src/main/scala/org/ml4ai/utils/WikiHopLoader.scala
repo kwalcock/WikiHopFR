@@ -8,7 +8,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
 
-class WikiHopLoader(path:String){
+class WikiHopLoader(path:String, cache:Boolean = true){
 
 
   private val serializer = new DocumentSerializer
@@ -42,11 +42,15 @@ class WikiHopLoader(path:String){
     }
   }
 
-  def apply(text: String): Document = unserializedAnnotations.getOrElseUpdate(text,{
-    val hash = md5Hash(text)
-    val serialized = raw(hash)
-    serializer.load(serialized)
-  })
+  def apply(text: String): Document =
+    if(cache) {
+      unserializedAnnotations.getOrElseUpdate(text, {
+        val hash = md5Hash(text)
+        val serialized = raw(hash)
+        serializer.load(serialized)
+      })
+    }
+    else serializer.load(raw(md5Hash(text)))
 
   def contains(text:String): Boolean =
     if(!unserializedAnnotations.contains(text))
