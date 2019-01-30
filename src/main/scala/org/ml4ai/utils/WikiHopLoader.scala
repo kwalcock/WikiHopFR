@@ -8,7 +8,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
 
-class WikiHopLoader(path:String, cache:Boolean = true){
+class WikiHopLoader(path:String, cache:Boolean = false){
 
 
   private val serializer = new DocumentSerializer
