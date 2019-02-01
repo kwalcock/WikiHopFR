@@ -8,7 +8,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
 
-class WikiHopLoader(path:String, cache:Boolean = false){
+class AnnotationsLoader(path:String, cache:Boolean = false){
 
 
   private val serializer = new DocumentSerializer
@@ -58,15 +58,15 @@ class WikiHopLoader(path:String, cache:Boolean = false){
     else
       false
 
-  def rawSentences = raw.values
+  def rawSentences:Iterable[String] = raw.values
 
 }
 
-object WikiHopLoader extends App {
+object AnnotationsLoader extends App {
   private val config = ConfigFactory.load()
   private val annotationsPath = config.getString("files.annotationsFile")
 
-  val loader = new WikiHopLoader(annotationsPath)
+  val loader = new AnnotationsLoader(annotationsPath)
 
   val s = "The 2004 Summer Olympic Games, officially known as the Games of the XXVIII Olympiad and commonly known as Athens 2004, was a premier international multi-sport event held in Athens, Greece, from 13 to 29 August 2004 with the motto \"Welcome Home.\" 10,625 athletes competed, some 600 more than expected, accompanied by 5,501 team officials from 201 countries. There were 301 medal events in 28 different sports. Athens 2004 marked the first time since the 1996 Summer Olympics that all countries with a National Olympic Committee were in attendance. 2004 marked the return of the games to the city where they began."
 

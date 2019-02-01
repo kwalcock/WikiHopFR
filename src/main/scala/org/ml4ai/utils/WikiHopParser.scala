@@ -38,7 +38,7 @@ object WikiHopParser{
   lazy val allDocuments:Set[String] = Set.empty[String] ++ documentsTest ++ documentsTrain
 
 
-  lazy val trainingInstances:List[WikiHopInstance] = {
+  lazy val trainingInstances:Seq[WikiHopInstance] = {
     for{
       JObject(elem) <- jsonTrain
       JField("id", JString(id)) <- elem
@@ -51,7 +51,7 @@ object WikiHopParser{
         supportDocs map { c => (c: @unchecked) match{ case JString(s) => s }})
   }
 
-  lazy val testingInstances:List[WikiHopInstance] = {
+  lazy val testingInstances:Seq[WikiHopInstance] = {
     for{
       JObject(elem) <- jsonTest
       JField("id", JString(id)) <- elem

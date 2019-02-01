@@ -4,7 +4,7 @@ import com.typesafe.config.ConfigFactory
 import org.clulab.odin.EventMention
 import org.clulab.processors.corenlp.CoreNLPProcessor
 import org.clulab.processors.fastnlp.FastNLPProcessor
-import org.ml4ai.utils.WikiHopLoader
+import org.ml4ai.utils.AnnotationsLoader
 
 object RuleTesterApp extends App {
 
