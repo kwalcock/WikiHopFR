@@ -22,6 +22,7 @@ lazy val root = (project in file(".")).
       "org.apache.lucene" % "lucene-core" % "7.6.0",
       "org.apache.lucene" % "lucene-analyzers-common" % "7.6.0",
       "org.apache.lucene" % "lucene-queryparser" % "7.6.0",
+      "org.scala-graph" %% "graph-core" % "1.12.5",
       scalaTest % Test
     )
   )

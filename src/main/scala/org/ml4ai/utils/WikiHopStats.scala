@@ -15,7 +15,7 @@ object WikiHopStats extends App {
 
   case class Row(instanceId:String, docHash:String, rawRels:Int, procRels:Int)
 
-  def printStats(vals:Iterable[Int]) = {
+  def printStats(vals:Iterable[Int]){
     val min = vals.min
     val max = vals.max
     val mean = vals.sum / vals.size.toFloat

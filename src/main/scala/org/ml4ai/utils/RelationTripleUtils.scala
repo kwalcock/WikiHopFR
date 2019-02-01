@@ -4,6 +4,7 @@ import org.clulab.processors.RelationTriple
 import org.clulab.struct.Interval
 
 import scala.annotation.tailrec
+import scala.util.hashing.MurmurHash3
 
 object RelationTripleUtils {
 
@@ -61,6 +62,16 @@ object RelationTripleUtils {
         else
           true
     }
+  }
+
+  private def filterUselessLemmas(lemmas: Iterable[String]) = lemmas
+
+  def entityGroundingHash(lemmas:Iterable[String]):Int = {
+    val filteredLemmas = filterUselessLemmas(lemmas)
+    if(filteredLemmas.isEmpty)
+      0
+    else
+      MurmurHash3.unorderedHash(filterUselessLemmas(lemmas))
   }
 
 }
