@@ -3,9 +3,6 @@ package org.ml4ai
 import java.security.MessageDigest
 
 import org.clulab.processors.shallownlp.ShallowNLPProcessor
-import org.clulab.struct.Interval
-
-import scala.annotation.tailrec
 import scala.io.Source
 import scala.language.reflectiveCalls
 
@@ -22,13 +19,26 @@ package object utils {
     md5.digest(s.getBytes).map("%02X".format(_)).mkString.toLowerCase
   }
 
+  def all(elems:Traversable[Boolean]):Boolean = if(elems.isEmpty) false else elems.reduce((a, b) => a & b)
+  def any(elems:Traversable[Boolean]):Boolean = if(elems.isEmpty) false else elems.reduce((a, b) => a | b)
+
   lazy val stopWords:Set[String] = using(Source.fromURL(getClass.getResource("/stopwords.txt"))){
     s =>
       s.getLines.toSet
   }
 
+  lazy val shallowProcessor = new ShallowNLPProcessor
+
+  def lemmatize(words:Seq[String]):Seq[String] = {
+    val doc = shallowProcessor.mkDocumentFromTokens(Seq(words))
+    shallowProcessor.annotate(doc)
+    doc.sentences.flatMap(_.lemmas.get).filter(!stopLemmas.contains(_))
+  }
+
+  def lemmatize(words:String):Seq[String] = lemmatize(words.split(" ").toSeq)
+
   lazy val stopLemmas:Set[String] = {
-    val proc = new ShallowNLPProcessor
+    val proc = shallowProcessor
     val doc  = proc.mkDocumentFromTokens(stopWords map (Seq(_)))
     proc.annotate(doc)
     doc.sentences.flatMap(_.lemmas.get).toSet
