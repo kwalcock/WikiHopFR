@@ -6,7 +6,9 @@ import org.ml4ai.utils._
 import org.ml4ai.utils.RelationTripleUtils.entityGroundingHash
 import scalax.collection.Graph
 import scalax.collection.edge.LBase.LEdgeImplicits
-import scalax.collection.edge.Implicits._ // shortcuts
+import scalax.collection.edge.Implicits._
+import scalax.collection.edge.LDiEdge
+import scalax.collection.io.dot._
 
 class KnowledgeGraph(documents:Iterable[(String,Document)]) {
 
@@ -27,8 +29,11 @@ class KnowledgeGraph(documents:Iterable[(String,Document)]) {
         elems =>
           val representative = elems.map(_._2).toSeq.maxBy(_.size)
           entityLemmaBuckets(representative)._2
-      } ++ Map(Set() -> 0)
+      } ++ Map(Set.empty[String] -> 0)
   }
+
+  private lazy val reverseEntityHashes = entityHashes map { case (k, v) => v -> k }
+
   private lazy val entityLemmaBuckets =
     documents.flatMap{
       d =>
@@ -135,6 +140,26 @@ class KnowledgeGraph(documents:Iterable[(String,Document)]) {
     }
   }
 
+  private val root = DotRootGraph(directed = true, id = Some(Id("WikiHop Instance")))
 
+  private def edgeTransformer(loader:AnnotationsLoader)(innerEdge: Graph[Int,LDiEdge]#EdgeT): Option[(DotGraph,DotEdgeStmt)] =
+    innerEdge.edge match {
+      case LDiEdge(source, target, label) => label match {
+        case KBLabel(r) =>
+          val src = entityLemmaBuckets(reverseEntityHashes(r.sourceHash))._1
+          val dst = entityLemmaBuckets(reverseEntityHashes(r.destinationHash))._1
 
+          val label = r.attributions.map{
+            attr =>
+              val doc = loader(attr.docHash)
+              val sen = doc.sentences(attr.sentenceIx)
+              attr.triple.relationText(sen)
+          }.toSet.mkString(", ")
+
+          Some((root, DotEdgeStmt(NodeId(src), NodeId(dst), List(DotAttr(Id("label"), Id(label))))))
+
+      }
+    }
+
+  def toDot(implicit loader:AnnotationsLoader):String = graph.toDot(dotRoot = root, edgeTransformer=edgeTransformer(loader))
 }
