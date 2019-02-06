@@ -10,6 +10,8 @@ import scalax.collection.edge.Implicits._
 import scalax.collection.edge.LDiEdge
 import scalax.collection.io.dot._
 
+import scala.util.{Failure, Success, Try}
+
 class KnowledgeGraph(documents:Iterable[(String,Document)]) {
 
   def this(documents:Iterable[String])(implicit loader:AnnotationsLoader) =
@@ -151,9 +153,17 @@ class KnowledgeGraph(documents:Iterable[(String,Document)]) {
 
           val label = r.attributions.map{
             attr =>
-              val doc = loader(attr.docHash)
-              val sen = doc.sentences(attr.sentenceIx)
-              attr.triple.relationText(sen)
+              Try {
+                val doc = loader(attr.docHash)
+                val sen = doc.sentences(attr.sentenceIx)
+                attr.triple.relationText(sen) match {
+                  case "" => "*EMPTY*"
+                  case l => l
+                }
+              }
+          }.collect{
+            case Success(txt) => txt
+            case Failure(_) => "*ATTRIBUTION ERROR*"
           }.toSet.mkString(", ")
 
           Some((root, DotEdgeStmt(NodeId(src), NodeId(dst), List(DotAttr(Id("label"), Id(label))))))
