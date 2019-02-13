@@ -5,12 +5,14 @@ import org.ml4ai.utils.AnnotationsLoader
 import org.ml4ai.utils._
 import org.ml4ai.utils.RelationTripleUtils.entityGroundingHash
 import scalax.collection.Graph
-import scalax.collection.edge.LBase.LEdgeImplicits
+import scalax.collection.edge.LBase.{LEdge, LEdgeImplicits}
 import scalax.collection.edge.Implicits._
-import scalax.collection.edge.LDiEdge
+import scalax.collection.edge.{LDiEdge, LUnDiEdge}
 import scalax.collection.io.dot._
 
 import scala.util.{Failure, Success, Try}
+
+case class KBLabel(relation:Relation)
 
 class KnowledgeGraph(documents:Iterable[(String,Document)]) {
 
@@ -34,9 +36,9 @@ class KnowledgeGraph(documents:Iterable[(String,Document)]) {
       } ++ Map(Set.empty[String] -> 0)
   }
 
-  private lazy val reverseEntityHashes = entityHashes map { case (k, v) => v -> k }
+  lazy val reverseEntityHashes = entityHashes map { case (k, v) => v -> k }
 
-  private lazy val entityLemmaBuckets =
+  lazy val entityLemmaBuckets =
     documents.flatMap{
       d =>
         d._2.sentences.flatMap{
@@ -105,13 +107,13 @@ class KnowledgeGraph(documents:Iterable[(String,Document)]) {
     }
 
 
-  private case class KBLabel(relation:Relation)
+
   private object MyImplicit extends LEdgeImplicits[KBLabel]; import MyImplicit._
 
   // Build graph
-  private val graph = Graph.from(edges = relations map {
+  val graph = Graph.from(edges = relations map {
     r =>
-      (r.sourceHash ~+> r.destinationHash)(KBLabel(r))
+      (r.sourceHash ~+ r.destinationHash)(KBLabel(r))
   })
 
   def findPath(source:String, destination:String):Iterable[Seq[Relation]] = {
@@ -144,7 +146,7 @@ class KnowledgeGraph(documents:Iterable[(String,Document)]) {
 
   private val root = DotRootGraph(directed = true, id = Some(Id("WikiHop Instance")))
 
-  private def edgeTransformer(loader:AnnotationsLoader)(innerEdge: Graph[Int,LDiEdge]#EdgeT): Option[(DotGraph,DotEdgeStmt)] =
+  private def edgeTransformer(loader:AnnotationsLoader)(innerEdge: Graph[Int,LUnDiEdge]#EdgeT): Option[(DotGraph,DotEdgeStmt)] =
     innerEdge.edge match {
       case LDiEdge(source, target, label) => label match {
         case KBLabel(r) =>
@@ -154,7 +156,7 @@ class KnowledgeGraph(documents:Iterable[(String,Document)]) {
           val label = r.attributions.map{
             attr =>
               Try {
-                val doc = loader(attr.docHash)
+                val doc = loader(attr.document)
                 val sen = doc.sentences(attr.sentenceIx)
                 attr.triple.relationText(sen) match {
                   case "" => "*EMPTY*"
