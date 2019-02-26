@@ -14,31 +14,9 @@ import scala.util.{Failure, Success, Try}
 
 case class KBLabel(relation:Relation)
 
-class KnowledgeGraph(documents:Iterable[(String,Document)]) {
+abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) {
 
-  def this(documents:Iterable[String])(implicit loader:AnnotationsLoader) =
-    this(documents map (h => (h, loader(h))))
-
-  private lazy val entityHashes = {
-    val allLemmas = entityLemmaBuckets.keySet
-
-    (for{
-      current <- allLemmas
-      candidate <- allLemmas
-      if all(current map candidate.contains)
-    } yield {
-      (current, candidate)
-    }).groupBy(_._1)
-      .mapValues{
-        elems =>
-          val representative = elems.map(_._2).toSeq.maxBy(_.size)
-          entityLemmaBuckets(representative)._2
-      } ++ Map(Set.empty[String] -> 0)
-  }
-
-  private lazy val reverseEntityHashes = entityHashes map { case (k, v) => v -> k }
-
-  private lazy val entityLemmaBuckets =
+  protected lazy val entityLemmaBuckets: Map[Set[String], (String, Int)] =
     documents.flatMap{
       d =>
         d._2.sentences.flatMap{
@@ -61,7 +39,27 @@ class KnowledgeGraph(documents:Iterable[(String,Document)]) {
         }
     }.toMap
 
-  def matchToEntities(text:String):Iterable[Set[String]] = {
+  protected lazy val entityHashes: Map[Set[String], Int] = {
+    val allLemmas = entityLemmaBuckets.keySet
+
+    (for{
+      current <- allLemmas
+      candidate <- allLemmas
+      if all(current map candidate.contains)
+    } yield {
+      (current, candidate)
+    }).groupBy(_._1)
+      .mapValues{
+        elems =>
+          val representative = elems.map(_._2).toSeq.maxBy(_.size)
+          entityLemmaBuckets(representative)._2
+      } ++ Map(Set.empty[String] -> 0)
+  }
+
+  protected lazy val reversedEntityHashes: Map[Int, Set[String]] = entityHashes map { case (k, v) => v -> k }
+
+
+  protected def matchToEntities(text:String):Iterable[Set[String]] = {
     val lemmas = lemmatize(text) map (_.toLowerCase)
     val buckets = entityLemmaBuckets.keys
 
@@ -74,30 +72,20 @@ class KnowledgeGraph(documents:Iterable[(String,Document)]) {
     }
   }
 
+  /**
+    * Extracts relation instances from a document object.
+    * The endpoints should be expressed as "lemma hashes" and each relation must carry its attributing element
+    * @param hash Wikipedia doc md5 hash string
+    * @param doc Processor's doc annotated instance
+    * @return An iterable with triples which have the following signature: Source hash, destination has, attribution
+    */
+  protected def extractRelationsFromDoc(hash:String, doc:Document):Iterable[(Int, Int, AttributingElement)]
+
   // Knowledge relation instances
-  private lazy val relations:Iterable[Relation] =
+  protected lazy val relations:Iterable[Relation] =
     documents.flatMap{
-      d =>
-        d._2.sentences.zipWithIndex.flatMap{
-          case (sen, sIx) =>
-            implicit val s:Sentence = sen
-            s.relations match {
-              case Some(rels) =>
-                rels map {
-                  r =>
-                    val sHash = entityHashes(r.subjectLemmas.map(_.toLowerCase).filter(l => !stopLemmas.contains(l)).toSet)
-                    val dHash = entityHashes(r.objectLemmas.map(_.toLowerCase).filter(l => !stopLemmas.contains(l)).toSet)
-                    if(sHash != 0 && dHash != 0)
-                      Some((sHash, dHash, AttributingElement(r, sIx, d._1)))
-                    else
-                      None
-                } collect {
-                  case Some(t) => t
-                }
-              case None =>
-                Seq.empty
-            }
-        }
+      d => extractRelationsFromDoc(d._1, d._2)
+
     }.groupBy(t => (t._1, t._2)).map{
       case (k, v) =>
         val sourceHash = k._1
@@ -106,15 +94,14 @@ class KnowledgeGraph(documents:Iterable[(String,Document)]) {
         Relation(sourceHash, destinationHash, attributions)
     }
 
-
-
   private object MyImplicit extends LEdgeImplicits[KBLabel]; import MyImplicit._
 
   // Build graph
-  private val graph = Graph.from(edges = relations map {
+  protected val graph: Graph[Int, LUnDiEdge] = Graph.from(edges = relations map {
     r =>
       (r.sourceHash ~+ r.destinationHash)(KBLabel(r))
   })
+
 
   def findPath(source:String, destination:String):Iterable[Seq[Relation]] = {
     val sourceCandidates = matchToEntities(source)
@@ -144,14 +131,15 @@ class KnowledgeGraph(documents:Iterable[(String,Document)]) {
     }
   }
 
+  // Dot format viz code
   private val root = DotRootGraph(directed = true, id = Some(Id("WikiHop Instance")))
 
   private def edgeTransformer(loader:AnnotationsLoader)(innerEdge: Graph[Int,LUnDiEdge]#EdgeT): Option[(DotGraph,DotEdgeStmt)] =
     innerEdge.edge match {
       case LDiEdge(source, target, label) => label match {
         case KBLabel(r) =>
-          val src = entityLemmaBuckets(reverseEntityHashes(r.sourceHash))._1
-          val dst = entityLemmaBuckets(reverseEntityHashes(r.destinationHash))._1
+          val src = entityLemmaBuckets(reversedEntityHashes(r.sourceHash))._1
+          val dst = entityLemmaBuckets(reversedEntityHashes(r.destinationHash))._1
 
           val label = r.attributions.map{
             attr =>
@@ -174,4 +162,5 @@ class KnowledgeGraph(documents:Iterable[(String,Document)]) {
     }
 
   def toDot(implicit loader:AnnotationsLoader):String = graph.toDot(dotRoot = root, edgeTransformer=edgeTransformer(loader))
+  //////////////////
 }

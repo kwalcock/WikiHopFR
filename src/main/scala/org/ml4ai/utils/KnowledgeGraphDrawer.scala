@@ -5,7 +5,7 @@ import java.nio.file.{Files, Paths}
 
 import sys.process._
 import com.typesafe.config.ConfigFactory
-import org.ml4ai.inference.KnowledgeGraph
+import org.ml4ai.inference.{KnowledgeGraph, OpenIEKnowledgeGraph}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -32,7 +32,7 @@ object KnowledgeGraphDrawer extends App {
   val ops =instances.zipWithIndex map {
     case (instance, ix) =>
       Future{
-        new KnowledgeGraph(instance.supportDocs)
+        new OpenIEKnowledgeGraph(instance.supportDocs)
       } map {
         kg =>
           kg.toDot
