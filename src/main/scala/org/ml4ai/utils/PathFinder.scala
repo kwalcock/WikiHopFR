@@ -27,7 +27,7 @@ object PathFinder extends App {
     (for(instance <- instances.par) yield {
 
 
-      val kg = new CoocurrenceKnowledgeGraph(instance.supportDocs)
+      val kg = new NamedEntityLinkKnowledgeGraph(instance.supportDocs)
       val source = instance.query.split(" ").drop(1).mkString(" ")
       val destination = instance.answer.get
 
@@ -43,7 +43,7 @@ object PathFinder extends App {
 
     }).toMap.seq
 
-  Serializer.save(results, "coocurrence_results.ser")
+  Serializer.save(results, "dependency_conneciton_results.ser")
 
   val x = results.values.count{
     case Successful(_) => true
