@@ -1,12 +1,9 @@
 package org.ml4ai.inference
 
-import org.clulab.odin.{Mention, TextBoundMention}
-import org.clulab.processors.{Document, Sentence}
-import org.ml4ai.ie.OdinEngine
-import org.ml4ai.utils.RelationTripleUtils.entityGroundingHash
+import org.clulab.processors.Document
 import org.ml4ai.utils.{AnnotationsLoader, stopLemmas}
 
-class EntityCoocurrenceKnowledgeGraph(documents:Iterable[(String,Document)]) extends KnowledgeGraph(documents) {
+class CoocurrenceKnowledgeGraph(documents:Iterable[(String,Document)]) extends NERBasedKnowledgeGraph(documents) {
 
   /**
     * Convenience constructor
@@ -43,29 +40,4 @@ class EntityCoocurrenceKnowledgeGraph(documents:Iterable[(String,Document)]) ext
 
   }
 
-  /**
-    * Provides a precomputed map of all the entities' lemma hash and a text representation for all the entities present
-    * in the document support set of this graph
-    *
-    * @return The hashes of the set of post-processed lemmas on the collection
-    */
-  override protected def buildEntityLemmaHashes: Map[Set[String], Int] = {
-    // For each of the documents...
-    documents.flatMap{
-      case (id, d) =>
-        // Extract the entities with the grammar and keep only entity mentions
-        getOdinEntitiesFromDoc(d).map{
-          entity =>
-            val lemmas = entity.lemmas.get.map(_.toLowerCase).filter(!stopLemmas.contains(_))
-            lemmas.toSet -> entityGroundingHash(lemmas)
-        }
-    }.toMap
-  }
-
-  protected def getOdinEntitiesFromDoc(d:Document):Iterable[TextBoundMention] = {
-    // Odin extractor engine to get the entities
-    OdinEngine.extractorEngine.extractFrom(d).collect{
-      case tb:TextBoundMention if tb.labels.contains("Entity") => tb
-    }
-  }
 }

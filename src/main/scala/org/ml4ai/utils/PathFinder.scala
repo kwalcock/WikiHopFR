@@ -27,7 +27,7 @@ object PathFinder extends App {
     (for(instance <- instances.par) yield {
 
 
-      val kg = new EntityCoocurrenceKnowledgeGraph(instance.supportDocs)
+      val kg = new CoocurrenceKnowledgeGraph(instance.supportDocs)
       val source = instance.query.split(" ").drop(1).mkString(" ")
       val destination = instance.answer.get
 
