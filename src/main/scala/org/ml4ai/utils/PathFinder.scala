@@ -2,85 +2,54 @@ package org.ml4ai.utils
 
 import com.typesafe.config.ConfigFactory
 import org.clulab.processors.bionlp.ner.KBEntry
-import org.ml4ai.inference.{KBLabel, KnowledgeGraph}
+import org.clulab.utils.Serializer
+import org.ml4ai.inference.{KBLabel, KnowledgeGraph, Relation}
 import scalax.collection.Graph
 import scalax.collection.edge.LUnDiEdge
 
-import scala.util.{Success, Try}
+import scala.util.{Failure, Success, Try}
 
 object PathFinder extends App {
+
+  abstract class Outcome
+  case class Successful(paths: Iterable[Seq[Relation]]) extends Outcome
+  case object NoPaths extends Outcome
+  case class Unsuccessful(e:Throwable) extends Outcome
+
   val config  = ConfigFactory.load()
 
   val instances = WikiHopParser.trainingInstances
   implicit val loader = new AnnotationsLoader(config.getString("files.annotationsFile"))
 
   // For each of the trainig instances
-  val paths =
-    for(instance <- instances.take(1000)) yield {
-    val kg = new KnowledgeGraph(instance.supportDocs)
-    val source = instance.query.split(" ").drop(1).mkString(" ")
-    // get the underlying graph
-    val graph:Graph[Int, LUnDiEdge] = kg.graph
+  val results =
+    (for(instance <- instances.par) yield {
 
-    val rootCandidates = kg.matchToEntities(source)
 
-    (for(root <- rootCandidates) yield Try{
-      val nr  = graph get kg.entityLemmaBuckets(root)._2
+      val kg = new KnowledgeGraph(instance.supportDocs)
+      val source = instance.query.split(" ").drop(1).mkString(" ")
+      val destination = instance.answer.get
 
-      nr.withMaxDepth(4).pathUntil{
-        n =>
-          (nr shortestPathTo n).get.length > 2
-      } match {
-        case Some(path) =>
-          Some(path.edges.map(_.label.asInstanceOf[KBLabel]).toSeq)
-        case None =>
-          None
+      val result = Try(kg.findPath(source, destination))
+
+      val ret:Outcome = result match {
+        case Success(paths) if paths.nonEmpty => Successful(paths)
+        case Success(_) =>  NoPaths
+        case Failure(exception) => Unsuccessful(exception)
       }
-    }).collect{
-      case Success(Some(p)) =>
-        val sources = p map {_.relation.attributions.map(_.document).toSet}
-        // Do they come from different sources?
-        val docs = sources.flatten
 
-        if (!any(docs map { d => all(sources map { s => s contains d }) })) {
-          Some{
-            p.map {
-              e: KBLabel =>
-                val source = kg.reverseEntityHashes(e.relation.sourceHash).mkString(" ")
-                val destination = kg.reverseEntityHashes(e.relation.destinationHash).mkString(" ")
-                val attributions = e.relation.attributions
+      instance.id -> ret
 
-                val evidence = attributions map {
-                  a =>
-                    val doc = loader(a.document)
-                    val sen = doc.sentences(a.sentenceIx)
-                    (md5Hash(a.document), sen.getSentenceText)
-                } toSet
+    }).toMap.seq
 
-                (source, destination, evidence)
-            }
-          }
-        }else
-          None
-    }.collect{
-      case Some(a) => a
-    }
+  Serializer.save(results, "openie_results.ser")
 
-    // make a walk to fetch all the entities that are 3 to 5 connections apart on different documents
+  val x = results.values.count{
+    case Successful(_) => true
+    case _ => false
   }
 
-  for(ps <- paths; p <- ps){
-    p foreach {
-      case (s, d, e) =>
-        println(s)
-        println(d)
-        e foreach {
-          case (dh, s) =>
-            println(s"$dh:\t$s")
-        }
-        println("===========================")
-    }
-    println("##########")
-    println
-  }
+  println(s"Successes: $x")
+
+
 }

@@ -36,9 +36,9 @@ class KnowledgeGraph(documents:Iterable[(String,Document)]) {
       } ++ Map(Set.empty[String] -> 0)
   }
 
-  lazy val reverseEntityHashes = entityHashes map { case (k, v) => v -> k }
+  private lazy val reverseEntityHashes = entityHashes map { case (k, v) => v -> k }
 
-  lazy val entityLemmaBuckets =
+  private lazy val entityLemmaBuckets =
     documents.flatMap{
       d =>
         d._2.sentences.flatMap{
@@ -111,7 +111,7 @@ class KnowledgeGraph(documents:Iterable[(String,Document)]) {
   private object MyImplicit extends LEdgeImplicits[KBLabel]; import MyImplicit._
 
   // Build graph
-  val graph = Graph.from(edges = relations map {
+  private val graph = Graph.from(edges = relations map {
     r =>
       (r.sourceHash ~+ r.destinationHash)(KBLabel(r))
   })
