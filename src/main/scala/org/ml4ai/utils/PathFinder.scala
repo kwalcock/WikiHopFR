@@ -3,7 +3,7 @@ package org.ml4ai.utils
 import com.typesafe.config.ConfigFactory
 import org.clulab.processors.bionlp.ner.KBEntry
 import org.clulab.utils.Serializer
-import org.ml4ai.inference.{KBLabel, KnowledgeGraph, OpenIEKnowledgeGraph, Relation}
+import org.ml4ai.inference._
 import scalax.collection.Graph
 import scalax.collection.edge.LUnDiEdge
 
@@ -24,10 +24,10 @@ object PathFinder extends App {
 
   // For each of the trainig instances
   val results =
-    (for(instance <- instances.take(100).par) yield {
+    (for(instance <- instances.par) yield {
 
 
-      val kg = new OpenIEKnowledgeGraph(instance.supportDocs)
+      val kg = new EntityCoocurrenceKnowledgeGraph(instance.supportDocs)
       val source = instance.query.split(" ").drop(1).mkString(" ")
       val destination = instance.answer.get
 
@@ -43,7 +43,7 @@ object PathFinder extends App {
 
     }).toMap.seq
 
-  //Serializer.save(results, "openie_results.ser")
+  Serializer.save(results, "coocurrence_results.ser")
 
   val x = results.values.count{
     case Successful(_) => true

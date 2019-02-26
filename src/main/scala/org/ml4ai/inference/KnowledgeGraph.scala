@@ -16,31 +16,9 @@ case class KBLabel(relation:Relation)
 
 abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) {
 
-  protected lazy val entityLemmaBuckets: Map[Set[String], (String, Int)] =
-    documents.flatMap{
-      d =>
-        d._2.sentences.flatMap{
-          implicit s =>
-            s.relations match {
-              case Some(rels) =>
-                rels flatMap {
-                  r =>
-                    val subjectLemmas = r.subjectLemmas.map(_.toLowerCase).filter(!stopLemmas.contains(_))
-                    val objectLemmas = r.objectLemmas.map(_.toLowerCase).filter(!stopLemmas.contains(_))
 
-
-                    Seq(
-                      subjectLemmas.toSet -> (r.subjectText, entityGroundingHash(subjectLemmas)),
-                      objectLemmas.toSet -> (r.objectText, entityGroundingHash(objectLemmas))
-                    )
-                }
-              case None => Seq.empty
-            }
-        }
-    }.toMap
-
-  protected lazy val entityHashes: Map[Set[String], Int] = {
-    val allLemmas = entityLemmaBuckets.keySet
+  protected lazy val groupedEntityHashes: Map[Set[String], Int] = {
+    val allLemmas = entityLemmaHashes.keySet
 
     (for{
       current <- allLemmas
@@ -52,16 +30,16 @@ abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) {
       .mapValues{
         elems =>
           val representative = elems.map(_._2).toSeq.maxBy(_.size)
-          entityLemmaBuckets(representative)._2
+          entityLemmaHashes(representative)
       } ++ Map(Set.empty[String] -> 0)
   }
 
-  protected lazy val reversedEntityHashes: Map[Int, Set[String]] = entityHashes map { case (k, v) => v -> k }
+  protected lazy val reversedGroupEntityHashes: Map[Int, Set[String]] = groupedEntityHashes map { case (k, v) => v -> k }
 
 
   protected def matchToEntities(text:String):Iterable[Set[String]] = {
     val lemmas = lemmatize(text) map (_.toLowerCase)
-    val buckets = entityLemmaBuckets.keys
+    val buckets = entityLemmaHashes.keys
 
     buckets filter {
       bucket =>
@@ -80,6 +58,16 @@ abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) {
     * @return An iterable with triples which have the following signature: Source hash, destination has, attribution
     */
   protected def extractRelationsFromDoc(hash:String, doc:Document):Iterable[(Int, Int, AttributingElement)]
+
+
+  /**
+    * Provides a precomputed map of all the entities' lemma hash and a text representation for all the entities present
+    * in the document support set of this graph
+    * @return The hashes of the set of post-processed lemmas on the collection
+    */
+  protected def buildEntityLemmaHashes: Map[Set[String], Int]
+
+  protected lazy val entityLemmaHashes = buildEntityLemmaHashes
 
   // Knowledge relation instances
   protected lazy val relations:Iterable[Relation] =
@@ -116,8 +104,8 @@ abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) {
       src <- sourceCandidates
       dst <- destinationCandidates
     } yield {
-      val s = graph get entityLemmaBuckets(src)._2
-      val d = graph get entityLemmaBuckets(dst)._2
+      val s = graph get entityLemmaHashes(src)
+      val d = graph get entityLemmaHashes(dst)
       s shortestPathTo d match {
         case Some(path) =>
           println(path.length)
@@ -138,17 +126,18 @@ abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) {
     innerEdge.edge match {
       case LDiEdge(source, target, label) => label match {
         case KBLabel(r) =>
-          val src = entityLemmaBuckets(reversedEntityHashes(r.sourceHash))._1
-          val dst = entityLemmaBuckets(reversedEntityHashes(r.destinationHash))._1
+          val src = entityLemmaHashes(reversedGroupEntityHashes(r.sourceHash))
+          val dst = entityLemmaHashes(reversedGroupEntityHashes(r.destinationHash))
 
           val label = r.attributions.map{
             attr =>
               Try {
                 val doc = loader(attr.document)
                 val sen = doc.sentences(attr.sentenceIx)
-                attr.triple.relationText(sen) match {
-                  case "" => "*EMPTY*"
-                  case l => l
+                attr.triple match {
+                  case Some(rel) if rel.relationText(sen) == "" => "*EMPTY*"
+                  case Some(rel) => rel.relationText(sen)
+                  case None => ""
                 }
               }
           }.collect{

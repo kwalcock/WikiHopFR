@@ -1,6 +1,7 @@
 package org.ml4ai.inference
 
 import org.clulab.processors.{Document, Sentence}
+import org.ml4ai.utils.RelationTripleUtils.entityGroundingHash
 import org.ml4ai.utils.{AnnotationsLoader, stopLemmas}
 
 class OpenIEKnowledgeGraph(documents:Iterable[(String,Document)]) extends KnowledgeGraph(documents) {
@@ -28,10 +29,10 @@ class OpenIEKnowledgeGraph(documents:Iterable[(String,Document)]) extends Knowle
           case Some(rels) =>
             rels map {
               r =>
-                val sHash = entityHashes(r.subjectLemmas.map(_.toLowerCase).filter(l => !stopLemmas.contains(l)).toSet)
-                val dHash = entityHashes(r.objectLemmas.map(_.toLowerCase).filter(l => !stopLemmas.contains(l)).toSet)
+                val sHash = groupedEntityHashes(r.subjectLemmas.map(_.toLowerCase).filter(l => !stopLemmas.contains(l)).toSet)
+                val dHash = groupedEntityHashes(r.objectLemmas.map(_.toLowerCase).filter(l => !stopLemmas.contains(l)).toSet)
                 if(sHash != 0 && dHash != 0)
-                  Some((sHash, dHash, AttributingElement(r, sIx, hash)))
+                  Some((sHash, dHash, AttributingElement(Some(r), sIx, hash)))
                 else
                   None
             } collect {
@@ -42,4 +43,32 @@ class OpenIEKnowledgeGraph(documents:Iterable[(String,Document)]) extends Knowle
         }
     }
   }
+
+
+  /**
+    * Provides a precomputed map of all the entities' lemma hash and a text representation for all the entities present
+    * in the document support set of this graph
+    */
+  protected override lazy val buildEntityLemmaHashes: Map[Set[String], Int] =
+    documents.flatMap{
+      d =>
+        d._2.sentences.flatMap{
+          implicit s =>
+            s.relations match {
+              case Some(rels) =>
+                rels flatMap {
+                  r =>
+                    val subjectLemmas = r.subjectLemmas.map(_.toLowerCase).filter(!stopLemmas.contains(_))
+                    val objectLemmas = r.objectLemmas.map(_.toLowerCase).filter(!stopLemmas.contains(_))
+
+
+                    Seq(
+                      subjectLemmas.toSet -> entityGroundingHash(subjectLemmas),
+                      objectLemmas.toSet -> entityGroundingHash(objectLemmas)
+                    )
+                }
+              case None => Seq.empty
+            }
+        }
+    }.toMap
 }

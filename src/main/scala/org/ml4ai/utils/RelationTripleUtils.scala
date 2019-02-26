@@ -64,7 +64,7 @@ object RelationTripleUtils {
     }
   }
 
-  private def filterUselessLemmas(lemmas: Iterable[String]) = lemmas
+  def filterUselessLemmas(lemmas: Iterable[String]) = lemmas.map(_.toLowerCase).filter(!stopLemmas.contains(_))
 
   def entityGroundingHash(lemmas:Iterable[String]):Int = {
     val filteredLemmas = filterUselessLemmas(lemmas)
