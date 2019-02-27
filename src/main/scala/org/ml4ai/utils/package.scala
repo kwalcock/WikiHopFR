@@ -3,8 +3,10 @@ package org.ml4ai
 import java.security.MessageDigest
 
 import org.clulab.processors.shallownlp.ShallowNLPProcessor
+
 import scala.io.Source
 import scala.language.reflectiveCalls
+import scala.util.hashing.MurmurHash3
 
 package object utils {
 
@@ -32,16 +34,25 @@ package object utils {
   def lemmatize(words:Seq[String]):Seq[String] = {
     val doc = shallowProcessor.mkDocumentFromTokens(Seq(words))
     shallowProcessor.annotate(doc)
-    doc.sentences.flatMap(_.lemmas.get).filter(!stopLemmas.contains(_))
+    doc.sentences.flatMap(s => filterUselessLemmas(s.lemmas.get))
   }
 
   def lemmatize(words:String):Seq[String] = lemmatize(words.split(" ").toSeq)
 
-  lazy val stopLemmas:Set[String] = {
+  private lazy val stopLemmas:Set[String] = {
     val proc = shallowProcessor
     val doc  = proc.mkDocumentFromTokens(stopWords map (Seq(_)))
     proc.annotate(doc)
     doc.sentences.flatMap(_.lemmas.get).toSet
   }
 
+  def entityGroundingHash(lemmas:Iterable[String]):Int = {
+    val filteredLemmas = filterUselessLemmas(lemmas).toSet
+    if(filteredLemmas.isEmpty)
+      0
+    else
+      MurmurHash3.unorderedHash(filterUselessLemmas(lemmas))
+  }
+
+  def filterUselessLemmas(lemmas: Iterable[String]): Iterable[String] = lemmas.map(_.toLowerCase).filter(!stopLemmas.contains(_))
 }

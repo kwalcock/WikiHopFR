@@ -1,8 +1,8 @@
 package org.ml4ai.inference
 
 import org.clulab.processors.{Document, Sentence}
-import org.ml4ai.utils.RelationTripleUtils.entityGroundingHash
-import org.ml4ai.utils.{AnnotationsLoader, stopLemmas}
+import org.ml4ai.utils.entityGroundingHash
+import org.ml4ai.utils.{AnnotationsLoader, filterUselessLemmas}
 
 class OpenIEKnowledgeGraph(documents:Iterable[(String,Document)]) extends KnowledgeGraph(documents) {
 
@@ -29,8 +29,8 @@ class OpenIEKnowledgeGraph(documents:Iterable[(String,Document)]) extends Knowle
           case Some(rels) =>
             rels map {
               r =>
-                val sHash = groupedEntityHashes(r.subjectLemmas.map(_.toLowerCase).filter(l => !stopLemmas.contains(l)).toSet)
-                val dHash = groupedEntityHashes(r.objectLemmas.map(_.toLowerCase).filter(l => !stopLemmas.contains(l)).toSet)
+                val sHash = groupedEntityHashes(filterUselessLemmas(r.subjectLemmas).toSet)
+                val dHash = groupedEntityHashes(filterUselessLemmas(r.objectLemmas).toSet)
                 if(sHash != 0 && dHash != 0)
                   Some((sHash, dHash, AttributingElement(Some(r), sIx, hash)))
                 else
@@ -58,8 +58,8 @@ class OpenIEKnowledgeGraph(documents:Iterable[(String,Document)]) extends Knowle
               case Some(rels) =>
                 rels flatMap {
                   r =>
-                    val subjectLemmas = r.subjectLemmas.map(_.toLowerCase).filter(!stopLemmas.contains(_))
-                    val objectLemmas = r.objectLemmas.map(_.toLowerCase).filter(!stopLemmas.contains(_))
+                    val subjectLemmas = filterUselessLemmas(r.subjectLemmas)
+                    val objectLemmas = filterUselessLemmas(r.objectLemmas)
 
 
                     Seq(

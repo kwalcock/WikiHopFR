@@ -64,14 +64,4 @@ object RelationTripleUtils {
     }
   }
 
-  def filterUselessLemmas(lemmas: Iterable[String]) = lemmas.map(_.toLowerCase).filter(!stopLemmas.contains(_))
-
-  def entityGroundingHash(lemmas:Iterable[String]):Int = {
-    val filteredLemmas = filterUselessLemmas(lemmas)
-    if(filteredLemmas.isEmpty)
-      0
-    else
-      MurmurHash3.unorderedHash(filterUselessLemmas(lemmas))
-  }
-
 }

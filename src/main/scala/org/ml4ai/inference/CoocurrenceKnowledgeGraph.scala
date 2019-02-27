@@ -1,7 +1,7 @@
 package org.ml4ai.inference
 
 import org.clulab.processors.Document
-import org.ml4ai.utils.{AnnotationsLoader, stopLemmas}
+import org.ml4ai.utils.{AnnotationsLoader, filterUselessLemmas}
 
 class CoocurrenceKnowledgeGraph(documents:Iterable[(String,Document)]) extends NERBasedKnowledgeGraph(documents) {
 
@@ -29,7 +29,7 @@ class CoocurrenceKnowledgeGraph(documents:Iterable[(String,Document)]) extends N
     entities.groupBy(_.sentence).flatMap{
       case (sIx, es) =>
         // Compute the entity hashes
-        val entityHashes = es map (e => groupedEntityHashes(e.lemmas.get.map(_.toLowerCase).filter(l => !stopLemmas.contains(l)).toSet))
+        val entityHashes = es map (e => groupedEntityHashes(filterUselessLemmas(e.lemmas.get).toSet))
         // Get all the pairs of entity hashes and compute their attribution
         for{
           a <- entityHashes

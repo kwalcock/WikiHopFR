@@ -2,7 +2,7 @@ package org.ml4ai.inference
 
 import org.clulab.odin.TextBoundMention
 import org.clulab.processors.Document
-import org.ml4ai.utils.{AnnotationsLoader, stopLemmas}
+import org.ml4ai.utils.{AnnotationsLoader, filterUselessLemmas, any}
 
 class NamedEntityLinkKnowledgeGraph(documents:Iterable[(String,Document)]) extends NERBasedKnowledgeGraph(documents) {
 
@@ -30,7 +30,7 @@ class NamedEntityLinkKnowledgeGraph(documents:Iterable[(String,Document)]) exten
     entities.groupBy(_.sentence).flatMap{
       case (sIx, es) =>
         // Compute the entity hashes
-        val entityHashes = es map (e => (e, groupedEntityHashes(e.lemmas.get.map(_.toLowerCase).filter(l => !stopLemmas.contains(l)).toSet)))
+        val entityHashes = es map (e => (e, groupedEntityHashes(filterUselessLemmas(e.lemmas.get).toSet)))
         // Get all the pairs of entity hashes and compute their attribution
         for{
           (a, hashA) <- entityHashes
@@ -49,10 +49,18 @@ class NamedEntityLinkKnowledgeGraph(documents:Iterable[(String,Document)]) exten
 
     sentence.dependencies match {
       case Some(deps) =>
-        if(deps.shortestPath(a.tokenInterval.start, b.tokenInterval.start).nonEmpty)
-          true
-        else
-          deps.shortestPath(b.tokenInterval.start, a.tokenInterval.start).nonEmpty
+        val pathExistences =
+          for{
+            i <- a.tokenInterval
+            j <- b.tokenInterval
+          } yield deps.shortestPath(i, j).nonEmpty
+
+        any(pathExistences)
+
+//        if(deps.shortestPath(a.tokenInterval.start, b.tokenInterval.start).nonEmpty)
+//          true
+//        else
+//          deps.shortestPath(b.tokenInterval.start, a.tokenInterval.start).nonEmpty
       case None =>
         throw new IllegalStateException(s"No dependency annotations for sentence ${sentence.getSentenceText}")
     }

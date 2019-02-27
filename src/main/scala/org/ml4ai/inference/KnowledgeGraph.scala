@@ -3,7 +3,7 @@ package org.ml4ai.inference
 import org.clulab.processors.{Document, Sentence}
 import org.ml4ai.utils.AnnotationsLoader
 import org.ml4ai.utils._
-import org.ml4ai.utils.RelationTripleUtils.entityGroundingHash
+import org.ml4ai.utils.entityGroundingHash
 import scalax.collection.Graph
 import scalax.collection.edge.LBase.{LEdge, LEdgeImplicits}
 import scalax.collection.edge.Implicits._
@@ -40,6 +40,7 @@ abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) {
   protected def matchToEntities(text:String):Iterable[Set[String]] = {
     val lemmas = lemmatize(text) map (_.toLowerCase)
     val buckets = entityLemmaHashes.keys
+    //val buckets = groupedEntityHashes.keys
 
     buckets filter {
       bucket =>
@@ -100,12 +101,27 @@ abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) {
     if(destinationCandidates.isEmpty)
       throw new NotGroundableElementException(destination)
 
+    if(sourceCandidates == destinationCandidates)
+      throw new SameGroundedEndpointsException(source, destination)
+
     (for{
       src <- sourceCandidates
       dst <- destinationCandidates
     } yield {
-      val s = graph get entityLemmaHashes(src)
-      val d = graph get entityLemmaHashes(dst)
+
+      //val sh = entityLemmaHashes.getOrElse(src, -1)
+      //val dh = entityLemmaHashes.getOrElse(dst, -1)
+
+      val sh = groupedEntityHashes.getOrElse(src, -1)
+      val dh = groupedEntityHashes.getOrElse(dst, -1)
+
+      if(sh == -1)
+        println(s"$src non-hashable")
+      if(dh == -1)
+        println(s"$dst non-hashable")
+
+      val s = graph get sh
+      val d = graph get dh
       s shortestPathTo d match {
         case Some(path) =>
           println(path.length)

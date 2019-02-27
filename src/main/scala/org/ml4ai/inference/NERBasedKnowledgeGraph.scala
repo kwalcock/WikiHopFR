@@ -3,8 +3,8 @@ package org.ml4ai.inference
 import org.clulab.odin.{Mention, TextBoundMention}
 import org.clulab.processors.{Document, Sentence}
 import org.ml4ai.ie.OdinEngine
-import org.ml4ai.utils.RelationTripleUtils.entityGroundingHash
-import org.ml4ai.utils.{AnnotationsLoader, stopLemmas}
+import org.ml4ai.utils.entityGroundingHash
+import org.ml4ai.utils.{AnnotationsLoader, filterUselessLemmas}
 
 abstract class NERBasedKnowledgeGraph(documents:Iterable[(String,Document)]) extends KnowledgeGraph(documents) {
 
@@ -21,7 +21,7 @@ abstract class NERBasedKnowledgeGraph(documents:Iterable[(String,Document)]) ext
         // Extract the entities with the grammar and keep only entity mentions
         getOdinEntitiesFromDoc(d).map{
           entity =>
-            val lemmas = entity.lemmas.get.map(_.toLowerCase).filter(!stopLemmas.contains(_))
+            val lemmas = filterUselessLemmas(entity.lemmas.get)
             lemmas.toSet -> entityGroundingHash(lemmas)
         }
     }.toMap
