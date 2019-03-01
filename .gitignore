@@ -70,3 +70,7 @@ fabric.properties
 .idea/caches/build_file_checksums.ser
 
 graphviz
+.DS_Store
+.ipynb_checkpoints
+.sbtopts
+*.log
