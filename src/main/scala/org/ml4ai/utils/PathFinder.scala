@@ -1,6 +1,9 @@
 package org.ml4ai.utils
 
+import java.io.{BufferedOutputStream, PrintWriter, StringWriter}
+
 import com.typesafe.config.ConfigFactory
+import com.typesafe.scalalogging.LazyLogging
 import org.clulab.processors.bionlp.ner.KBEntry
 import org.clulab.utils.Serializer
 import org.ml4ai.inference._
@@ -9,7 +12,7 @@ import scalax.collection.edge.LUnDiEdge
 
 import scala.util.{Failure, Success, Try}
 
-object PathFinder extends App {
+object PathFinder extends App with LazyLogging{
 
   abstract class Outcome
 
@@ -30,11 +33,18 @@ object PathFinder extends App {
     (for (instance <- instances.par) yield {
 
 
-      val kg = new CoocurrenceKnowledgeGraph(instance.supportDocs)
+      val kg = new NamedEntityLinkKnowledgeGraph(instance.supportDocs)
       val source = instance.query.split(" ").drop(1).mkString(" ")
       val destination = instance.answer.get
 
-      val result = Try(kg.findPath(source, destination))
+      val result = Try(kg.findPath(source, destination)) recoverWith {
+        case tr:java.util.NoSuchElementException =>
+          val buf = new StringWriter()
+          val writer = new PrintWriter(buf)
+          tr.printStackTrace(writer)
+          logger.error(buf.toString)
+          Failure(tr)
+      }
 
       val ret: Outcome = result match {
         case Success(paths) if paths.nonEmpty => Successful(paths)

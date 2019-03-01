@@ -1,5 +1,6 @@
 package org.ml4ai.inference
 
+import com.typesafe.scalalogging.LazyLogging
 import org.clulab.processors.{Document, Sentence}
 import org.ml4ai.utils.AnnotationsLoader
 import org.ml4ai.utils._
@@ -14,7 +15,7 @@ import scala.util.{Failure, Success, Try}
 
 case class KBLabel(relation:Relation)
 
-abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) {
+abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) extends LazyLogging{
 
 
   protected lazy val groupedEntityHashes: Map[Set[String], Int] = {
@@ -115,23 +116,28 @@ abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) {
       val sh = groupedEntityHashes.getOrElse(src, -1)
       val dh = groupedEntityHashes.getOrElse(dst, -1)
 
-      if(sh == -1)
+
+      if (sh == -1)
         println(s"$src non-hashable")
-      if(dh == -1)
+      if (dh == -1)
         println(s"$dst non-hashable")
 
-      val s = graph get sh
-      val d = graph get dh
-      s shortestPathTo d match {
-        case Some(path) =>
-          println(path.length)
-          Some(path.edges.map(_.relation).toSeq)
-        case None =>
-          println("No path")
-          None
+      Try {
+        val s = graph get sh
+        val d = graph get dh
+
+        s shortestPathTo d match {
+          case Some(path) =>
+            println(path.length)
+            Some(path.edges.map(_.relation).toSeq)
+          case None =>
+            println("No path")
+            None
+        }
       }
+
     }) collect {
-      case Some(path) => path
+      case Success(Some(path)) => path
     }
   }
 
