@@ -2,7 +2,8 @@ package org.ml4ai.inference
 
 import org.clulab.odin.TextBoundMention
 import org.clulab.processors.Document
-import org.ml4ai.utils.{AnnotationsLoader, filterUselessLemmas, any}
+import org.clulab.utils.DependencyUtils
+import org.ml4ai.utils.{AnnotationsLoader, any, filterUselessLemmas}
 
 class NamedEntityLinkKnowledgeGraph(documents:Iterable[(String,Document)]) extends NERBasedKnowledgeGraph(documents) {
 
@@ -49,18 +50,24 @@ class NamedEntityLinkKnowledgeGraph(documents:Iterable[(String,Document)]) exten
 
     sentence.dependencies match {
       case Some(deps) =>
+//        val pathExistences =
+//          for{
+//            i <- a.tokenInterval
+//            j <- b.tokenInterval
+//          } yield deps.shortestPath(i, j).nonEmpty
+//
+//        any(pathExistences)
+
+        val headsA = DependencyUtils.findHeadsStrict(a.tokenInterval, a.sentenceObj)
+        val headsB = DependencyUtils.findHeadsStrict(b.tokenInterval, b.sentenceObj)
+
         val pathExistences =
           for{
-            i <- a.tokenInterval
-            j <- b.tokenInterval
+            i <- headsA
+            j <- headsB
           } yield deps.shortestPath(i, j).nonEmpty
 
         any(pathExistences)
-
-//        if(deps.shortestPath(a.tokenInterval.start, b.tokenInterval.start).nonEmpty)
-//          true
-//        else
-//          deps.shortestPath(b.tokenInterval.start, a.tokenInterval.start).nonEmpty
       case None =>
         throw new IllegalStateException(s"No dependency annotations for sentence ${sentence.getSentenceText}")
     }

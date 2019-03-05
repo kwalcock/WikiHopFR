@@ -118,9 +118,12 @@ abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) extends Laz
 
 
       if (sh == -1)
-        println(s"$src non-hashable")
+        logger.error(s"$src non-hashable")
       if (dh == -1)
-        println(s"$dst non-hashable")
+        logger.error(s"$dst non-hashable")
+
+      if(sh == dh)
+        throw new SameGroundedEndpointsException(source, destination)
 
       Try {
         val s = graph get sh
