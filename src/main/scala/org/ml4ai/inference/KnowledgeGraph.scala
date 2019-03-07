@@ -38,6 +38,9 @@ abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) extends Laz
   protected lazy val reversedGroupEntityHashes: Map[Int, Set[String]] = groupedEntityHashes map { case (k, v) => v -> k }
 
 
+  def entityHashToText(hash:Int):Iterable[String] = reversedGroupEntityHashes(hash)
+
+
   protected def matchToEntities(text:String):Iterable[Set[String]] = {
     val lemmas = lemmatize(text) map (_.toLowerCase)
     val buckets = entityLemmaHashes.keys

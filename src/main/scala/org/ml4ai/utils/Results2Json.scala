@@ -25,8 +25,8 @@ object Results2Json extends App {
             case Successful(paths) => Map("Successful" -> (paths map {
               elems =>
                 elems map {
-                  e => Map("Source" -> e.sourceHash,
-                    "Destination" -> e.destinationHash,
+                  e => Map("Source" -> e.source,
+                    "Destination" -> e.destination,
                     "Attributions" -> e.attributions.map{
                       a =>
                         Map("Doc" -> md5Hash(a.document), "Sentence" -> a.sentenceIx)

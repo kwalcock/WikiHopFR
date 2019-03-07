@@ -16,7 +16,7 @@ object PathFinder extends App with LazyLogging{
 
   abstract class Outcome
 
-  case class Successful(paths: Iterable[Seq[Relation]]) extends Outcome
+  case class Successful(paths: Iterable[Seq[VerboseRelation]]) extends Outcome
 
   case object NoPaths extends Outcome
 
@@ -47,7 +47,20 @@ object PathFinder extends App with LazyLogging{
       }
 
       val ret: Outcome = result match {
-        case Success(paths) if paths.nonEmpty => Successful(paths)
+        case Success(paths) if paths.nonEmpty =>
+          Successful{
+            paths map {
+              path =>
+                path map {
+                  relation =>
+                    VerboseRelation(
+                      kg.entityHashToText(relation.sourceHash),
+                      kg.entityHashToText(relation.destinationHash),
+                      relation.attributions
+                    )
+                }
+            }}
+
         case Success(_) => NoPaths
         case Failure(exception) => Unsuccessful(exception)
       }
@@ -56,7 +69,7 @@ object PathFinder extends App with LazyLogging{
 
     }).toMap.seq
 
-//  Serializer.save(results, "deps_results2.ser")
+  Serializer.save(results, "deps_results2.ser")
 
   val x = results.values.count {
     case Successful(_) => true
@@ -70,15 +83,15 @@ object PathFinder extends App with LazyLogging{
   def getOutcomeCounts(res: Map[String, Outcome]) = {
     var successes = 0
     var errors = 0
-    var nopaths = 0
+    var noPaths = 0
     for (o <- res.values) {
       o match {
         case Successful(_) => successes += 1;
-        case NoPaths => nopaths += 1;
+        case NoPaths => noPaths += 1;
         case Unsuccessful(_) => errors += 1
       }
     }
-    Map("Successes" -> successes, "NoPaths" -> nopaths, "Errors" -> errors)
+    Map("Successes" -> successes, "NoPaths" -> noPaths, "Errors" -> errors)
   }
 
   def getErrorCounts(res: Map[String, Outcome]) = {
