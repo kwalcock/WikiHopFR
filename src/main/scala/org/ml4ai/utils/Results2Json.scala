@@ -22,9 +22,19 @@ object Results2Json extends App {
       pw.print(
         write(
           data.mapValues{
-            case Successful(paths) => "Successful"
+            case Successful(paths) => Map("Successful" -> (paths map {
+              elems =>
+                elems map {
+                  e => Map("Source" -> e.sourceHash,
+                    "Destination" -> e.destinationHash,
+                    "Attributions" -> e.attributions.map{
+                      a =>
+                        Map("Doc" -> md5Hash(a.document), "Sentence" -> a.sentenceIx)
+                    })
+                }
+            }))
             case NoPaths => "NoPath"
-            case Unsuccessful(e) => e.toString
+            case Unsuccessful(e) => Map("Error" -> e.toString)
           }
         )
       )

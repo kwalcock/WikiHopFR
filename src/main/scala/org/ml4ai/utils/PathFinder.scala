@@ -56,7 +56,7 @@ object PathFinder extends App with LazyLogging{
 
     }).toMap.seq
 
-  Serializer.save(results, "deps_results2.ser")
+//  Serializer.save(results, "deps_results2.ser")
 
   val x = results.values.count {
     case Successful(_) => true
