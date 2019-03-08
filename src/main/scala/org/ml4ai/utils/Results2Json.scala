@@ -2,6 +2,7 @@ package org.ml4ai.utils
 
 import java.io.PrintWriter
 
+import com.typesafe.config.ConfigFactory
 import org.clulab.utils.Serializer
 import org.ml4ai.utils.PathFinder.{NoPaths, Outcome, Successful, Unsuccessful}
 import org.json4s._
@@ -10,7 +11,10 @@ import org.json4s.jackson.Serialization.write
 
 object Results2Json extends App {
 
-  val inPath = args(0)
+  val config = ConfigFactory.load()
+
+  val inPath = config.getString("pathFinder.outputFile")
+
   val outPath = inPath.split("\\.").dropRight(1).mkString(".") + ".json"
 
   val data = Serializer.load[Map[String, Outcome]](inPath)
