@@ -33,7 +33,13 @@ object PathFinder extends App with LazyLogging{
     (for (instance <- instances.par) yield {
 
 
-      val kg = new NamedEntityLinkKnowledgeGraph(instance.supportDocs)
+      //val kg = new CoocurrenceKnowledgeGraph(instance.supportDocs)
+      val kg = config.getString("pathFinder.knowledgeGraphType") match {
+        case "NamedEntityLink" => new NamedEntityLinkKnowledgeGraph(instance.supportDocs)
+        case "Cooccurrence" => new CoocurrenceKnowledgeGraph(instance.supportDocs)
+        case "OpenIE" => new OpenIEKnowledgeGraph(instance.supportDocs)
+        case unknown => throw new UnsupportedOperationException(s"KnowledgeGraph type not implemented: $unknown")
+      }
       val source = instance.query.split(" ").drop(1).mkString(" ")
       val destination = instance.answer.get
 
@@ -69,7 +75,8 @@ object PathFinder extends App with LazyLogging{
 
     }).toMap.seq
 
-  Serializer.save(results, "deps_results2.ser")
+
+  Serializer.save(results, config.getString("pathFinder.outputFile"))
 
   val x = results.values.count {
     case Successful(_) => true
