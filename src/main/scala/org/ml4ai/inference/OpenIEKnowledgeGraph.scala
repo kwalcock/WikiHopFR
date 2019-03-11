@@ -41,7 +41,7 @@ class OpenIEKnowledgeGraph(documents:Iterable[(String,Document)]) extends Knowle
           case None =>
             Seq.empty
         }
-    }
+    }.toSet
   }
 
 

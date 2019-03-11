@@ -33,12 +33,12 @@ class NamedEntityLinkKnowledgeGraph(documents:Iterable[(String,Document)]) exten
         // Compute the entity hashes
         val entityHashes = es map (e => (e, groupedEntityHashes(filterUselessLemmas(e.lemmas.get).toSet)))
         // Get all the pairs of entity hashes and compute their attribution
-        for{
+        (for{
           (a, hashA) <- entityHashes
           (b, hashB) <- entityHashes
           if hashA != 0 && hashB != 0 && hashA != hashB
           if hasConnectingPath(a, b)
-        } yield (hashA, hashB, AttributingElement(None, sIx, hash))
+        } yield (hashA, hashB, AttributingElement(None, sIx, hash))).toSet
     }
   }
 

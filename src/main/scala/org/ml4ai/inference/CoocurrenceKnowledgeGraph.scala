@@ -31,11 +31,11 @@ class CoocurrenceKnowledgeGraph(documents:Iterable[(String,Document)]) extends N
         // Compute the entity hashes
         val entityHashes = es map (e => groupedEntityHashes(filterUselessLemmas(e.lemmas.get).toSet))
         // Get all the pairs of entity hashes and compute their attribution
-        for{
+        (for{
           a <- entityHashes
           b <- entityHashes
           if a != b && a != 0 && b != 0
-        } yield (a, b, AttributingElement(None, sIx, hash))
+        } yield (a, b, AttributingElement(None, sIx, hash))).toSet
     }
 
   }
