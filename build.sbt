@@ -1,10 +1,15 @@
 import Dependencies._
 
+lazy val scala212 = "2.12.8"
+lazy val scala211 = "2.11.12"
+lazy val supportedScalaVersions = List(scala212, scala211)
+
 lazy val root = (project in file(".")).
   settings(
     inThisBuild(List(
       organization := "org.ml4ai",
-      scalaVersion := "2.12.7",
+      scalaVersion := scala212,
+      //crossScalaVersions := supportedScalaVersions,
       version      := "0.1.0-SNAPSHOT"
     )),
     scalacOptions ++= Seq(
@@ -24,6 +29,7 @@ lazy val root = (project in file(".")).
       "org.apache.lucene" % "lucene-queryparser" % "7.6.0",
       "org.scala-graph" %% "graph-core" % "1.12.5",
       "org.scala-graph" %% "graph-dot" % "1.12.1",
+      "org.clulab" %% "sarsamora" % "0.2.0-SNAPSHOT",
       scalaTest % Test
     )
   )

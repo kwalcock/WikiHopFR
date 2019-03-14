@@ -55,8 +55,9 @@ object PathFinder extends App with LazyLogging{
       val ret: Outcome = result match {
         case Success(paths) if paths.nonEmpty =>
           Successful{
-            paths map {
-              path =>
+            // Keep unique paths only
+            paths.toSet.map {
+              path:Seq[Relation] =>
                 path map {
                   relation =>
                     VerboseRelation(
