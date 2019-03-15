@@ -28,7 +28,7 @@ object PathFinder extends App with LazyLogging{
 
   implicit val loader: AnnotationsLoader = new AnnotationsLoader(config.getString("files.annotationsFile"))
 
-  // For each of the trainig instances
+  // For each of the training instances
   val results =
     (for (instance <- instances.par) yield {
 

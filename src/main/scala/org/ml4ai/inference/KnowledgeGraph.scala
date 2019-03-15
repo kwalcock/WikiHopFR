@@ -72,7 +72,7 @@ abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) extends Laz
     */
   protected def buildEntityLemmaHashes: Map[Set[String], Int]
 
-  protected lazy val entityLemmaHashes = buildEntityLemmaHashes
+  protected lazy val entityLemmaHashes: Map[Set[String], Int] = buildEntityLemmaHashes
 
   // Knowledge relation instances
   protected lazy val relations:Iterable[Relation] =
@@ -90,11 +90,13 @@ abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) extends Laz
   private object MyImplicit extends LEdgeImplicits[KBLabel]; import MyImplicit._
 
   // Build graph
-  protected val graph: Graph[Int, LUnDiEdge] = Graph.from(edges = relations map {
+  protected lazy val graph: Graph[Int, LUnDiEdge] = Graph.from(edges = relations map {
     r =>
       (r.sourceHash ~+ r.destinationHash)(KBLabel(r))
   })
 
+  // Entities belonging to a graph
+  lazy val entities:Iterable[Int] = graph.nodes map (_.value)
 
   def findPath(source:String, destination:String):Iterable[Seq[Relation]] = {
     val sourceCandidates = matchToEntities(source)
