@@ -4,6 +4,7 @@ import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
 import org.ml4ai.WikiHopInstance
 import org.ml4ai.inference.{CoocurrenceKnowledgeGraph, KnowledgeGraph, Relation}
+import org.ml4ai.ir.LuceneHelper
 import org.ml4ai.utils.{AnnotationsLoader, WikiHopParser}
 import org.sarsamora.actions.Action
 import org.sarsamora.environment.Environment
@@ -106,12 +107,12 @@ class WikiHopEnvironment(start:String, end:String) extends Environment {
   override def execute(action: Action, persist: Boolean): Double = {
     // Increment the iteration counter
     iterationNum += 1
-    // TODO Convert the action into a lucene query
-    // TODO Fetch documents from lucene query
-    val fetchedDocs = Set.empty[String]
+    // TODO: Convert the action into a lucene query
+    // TODO: Fetch documents from lucene query
+//    val fetchedDocs = Set.empty[String]
+    val fetchedDocs = LuceneHelper.retrieveDocumentNames(action)
     // Generate new KG from the documents
     val kg = new KG(fetchedDocs)
-    // TODO Compute the reward function
     val reward = rewardSignal(action, kg, fetchedDocs)
 
     // Update the knowledge graph

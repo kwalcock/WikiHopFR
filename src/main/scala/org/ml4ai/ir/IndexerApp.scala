@@ -10,10 +10,6 @@ import org.apache.lucene.store.NIOFSDirectory
 import org.apache.lucene.index.IndexWriter
 import org.apache.lucene.document.{Document, Field, StringField, TextField}
 import org.apache.lucene.document.StringField
-import org.apache.lucene.search.BooleanClause.Occur
-import org.apache.lucene.search.BooleanQuery
-import org.apache.lucene.search.TermQuery
-import org.apache.lucene.search.TopDocs
 
 
 object IndexerApp extends App{
