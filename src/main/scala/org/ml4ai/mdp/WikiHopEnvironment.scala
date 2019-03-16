@@ -3,12 +3,13 @@ package org.ml4ai.mdp
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
 import org.ml4ai.WikiHopInstance
-import org.ml4ai.inference.{CoocurrenceKnowledgeGraph, KnowledgeGraph}
+import org.ml4ai.inference.{CoocurrenceKnowledgeGraph, KnowledgeGraph, Relation}
 import org.ml4ai.utils.{AnnotationsLoader, WikiHopParser}
 import org.sarsamora.actions.Action
 import org.sarsamora.environment.Environment
 import org.sarsamora.states.State
 
+import collection.Set
 import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 
@@ -32,6 +33,7 @@ class WikiHopEnvironment(start:String, end:String) extends Environment {
   private var iterationNum:Int = 0
   private val exploredEntities = new mutable.HashSet[Int]
   private val exploitedEntities = new mutable.HashSet[Int]
+  private val papersRead = new mutable.HashSet[String]
 
 
 
@@ -85,18 +87,32 @@ class WikiHopEnvironment(start:String, end:String) extends Environment {
     * @param action taken
     * @return
     */
-  private def rewardSignal(action: Action):Double = ???
+  private def rewardSignal(action: Action, newState:KG, fetchedPapers:Set[String]):Double = {
+    // TODO make the reward function more nuanced
+    val newPapers:Int = (fetchedPapers diff fetchedPapers).size
+    val newRelations:Int =
+      (newState.edges diff
+        (knowledgeGraph match {
+          case Some(kg) => kg.edges
+          case None => Set.empty[Relation]
+        })
+      ).size
+
+    val livingReward = 0.5
+
+    (newRelations / newPapers) - livingReward
+  }
 
   override def execute(action: Action, persist: Boolean): Double = {
     // Increment the iteration counter
     iterationNum += 1
     // TODO Convert the action into a lucene query
     // TODO Fetch documents from lucene query
-    val fetchedDocs = Seq.empty[String]
+    val fetchedDocs = Set.empty[String]
     // Generate new KG from the documents
     val kg = new KG(fetchedDocs)
     // TODO Compute the reward function
-    val reward = rewardSignal(action)
+    val reward = rewardSignal(action, kg, fetchedDocs)
 
     // Update the knowledge graph
     knowledgeGraph = Some(kg)

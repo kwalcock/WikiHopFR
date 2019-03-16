@@ -97,6 +97,7 @@ abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) extends Laz
 
   // Entities belonging to a graph
   lazy val entities:Iterable[Int] = graph.nodes map (_.value)
+  lazy val edges: collection.Set[Relation] = graph.edges map (_.value.relation)
 
   def findPath(source:String, destination:String):Iterable[Seq[Relation]] = {
     val sourceCandidates = matchToEntities(source)
