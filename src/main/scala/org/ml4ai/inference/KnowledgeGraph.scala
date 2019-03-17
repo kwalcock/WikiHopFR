@@ -38,7 +38,7 @@ abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) extends Laz
   protected lazy val reversedGroupEntityHashes: Map[Int, Set[String]] = groupedEntityHashes map { case (k, v) => v -> k }
 
 
-  def entityHashToText(hash:Int):Iterable[String] = reversedGroupEntityHashes(hash)
+  protected def entityHashToText(hash:Int):Set[String] = reversedGroupEntityHashes(hash)
 
 
   protected def matchToEntities(text:String):Iterable[Set[String]] = {
@@ -96,10 +96,10 @@ abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) extends Laz
   })
 
   // Entities belonging to a graph
-  lazy val entities:Iterable[Int] = graph.nodes map (_.value)
-  lazy val edges: collection.Set[Relation] = graph.edges map (_.value.relation)
+  lazy val entities:Iterable[Set[String]] = graph.nodes map (e => entityHashToText(e.value))
+  lazy val edges: collection.Set[VerboseRelation] = graph.edges map (r => relationToVerboseRelation(r.value.relation))
 
-  def findPath(source:String, destination:String):Iterable[Seq[Relation]] = {
+  def findPath(source:String, destination:String):Iterable[Seq[VerboseRelation]] = {
     val sourceCandidates = matchToEntities(source)
     if(sourceCandidates.isEmpty)
       throw new NotGroundableElementException(source)
@@ -138,7 +138,11 @@ abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) extends Laz
         s shortestPathTo d match {
           case Some(path) =>
             println(path.length)
-            Some(path.edges.map(_.relation).toSeq)
+            Some(
+              path.edges.map{
+                edge => relationToVerboseRelation(edge.relation)
+              }.toSeq
+            )
           case None =>
             println("No path")
             None
@@ -149,6 +153,13 @@ abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) extends Laz
       case Success(Some(path)) => path
     }
   }
+
+  protected def relationToVerboseRelation(relation:Relation):VerboseRelation =
+    VerboseRelation(
+      entityHashToText(relation.sourceHash),
+      entityHashToText(relation.destinationHash),
+      relation.attributions
+    )
 
   // Dot format viz code
   private val root = DotRootGraph(directed = true, id = Some(Id("WikiHop Instance")))

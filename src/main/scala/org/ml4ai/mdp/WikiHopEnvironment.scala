@@ -32,14 +32,14 @@ class WikiHopEnvironment(start:String, end:String) extends Environment {
   // State variables
   private var knowledgeGraph:Option[KnowledgeGraph] = None
   private var iterationNum:Int = 0
-  private val exploredEntities = new mutable.HashSet[Int]
-  private val exploitedEntities = new mutable.HashSet[Int]
+  private val exploredEntities = new mutable.HashSet[Set[String]]
+  private val exploitedEntities = new mutable.HashSet[Set[String]]
   private val papersRead = new mutable.HashSet[String]
 
 
 
-  private def exploitationEligible(e: Int) = !(exploitedEntities contains e)
-  private def explorationEligible(e: Int) = !(exploredEntities contains e)
+  private def exploitationEligible(e: Set[String]) = !(exploitedEntities contains e)
+  private def explorationEligible(e: Set[String]) = !(exploredEntities contains e)
 
 
 
@@ -50,11 +50,10 @@ class WikiHopEnvironment(start:String, end:String) extends Environment {
         // If this is the first call and there isn't a KG yet, generate the actions given those two nodes
         case None =>
           List(
-            // TODO: Figure out how to deal with the hashes correctly
-            Exploration(start.##),
-            Exploration(end.##),
-            ExplorationDouble(start.##, end.##),
-            Exploitation(start.##, end.##),
+            Exploration(start.split(" ").toSet),
+            Exploration(end.split(" ").toSet),
+            ExplorationDouble(start.split(" ").toSet, end.split(" ").toSet),
+            Exploitation(start.split(" ").toSet, end.split(" ").toSet),
           )
         // Otherwise, procedurally generate the list of actions
         case Some(kg) =>
@@ -69,7 +68,7 @@ class WikiHopEnvironment(start:String, end:String) extends Environment {
                 ret += Exploration(e)
 
               if(exploitationEligible(e))
-                ret += Exploitation(e, end.##)
+                ret += Exploitation(e, end.split(" ").toSet)
 
               for(i <- currentEntities if i != e && explorationEligible(i)){
                 ret += ExplorationDouble(e, i)
@@ -95,7 +94,7 @@ class WikiHopEnvironment(start:String, end:String) extends Environment {
       (newState.edges diff
         (knowledgeGraph match {
           case Some(kg) => kg.edges
-          case None => Set.empty[Relation]
+          case None => Set.empty
         })
       ).size
 

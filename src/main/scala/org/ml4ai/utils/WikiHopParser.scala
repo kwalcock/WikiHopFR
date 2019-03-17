@@ -51,6 +51,9 @@ object WikiHopParser{
         supportDocs map { c => (c: @unchecked) match{ case JString(s) => s }})
   }
 
+  lazy private val trainingMap = trainingInstances.map(i => i.id -> i).toMap
+  lazy private val testingMap = testingInstances.map(i => i.id -> i).toMap
+
   lazy val testingInstances:Seq[WikiHopInstance] = {
     for{
       JObject(elem) <- jsonTest
@@ -63,5 +66,11 @@ object WikiHopParser{
       supportDocs map { c => (c: @unchecked) match{ case JString(s) => s }})
   }
 
+  def get(instanceId:String): WikiHopInstance = {
+    trainingMap.getOrElse(
+      instanceId,
+      testingMap(instanceId)
+    )
+  }
 
 }

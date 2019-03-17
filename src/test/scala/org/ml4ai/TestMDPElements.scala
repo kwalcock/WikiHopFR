@@ -6,9 +6,9 @@ import org.scalatest.{FlatSpec, Matchers}
 class TestMDPElements extends FlatSpec with Matchers {
 
   "ExplorationDouble Action" should "be commutative on its arguments" in {
-    val a = ExplorationDouble(10, 20)
-    val b = ExplorationDouble(20, 10)
-    val c = ExplorationDouble(10, 30)
+    val a = ExplorationDouble(Set("10"), Set("20"))
+    val b = ExplorationDouble(Set("20"), Set("10"))
+    val c = ExplorationDouble(Set("10"), Set("30"))
 
     // Test the equals function
     a should equal (b)

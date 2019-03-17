@@ -3,9 +3,9 @@ package org.ml4ai.mdp
 import util.hashing.MurmurHash3
 import org.sarsamora.actions.Action
 
-case class Exploration(entityHash:Int) extends Action
+case class Exploration(entityHash:Set[String]) extends Action
 
-case class ExplorationDouble(entityHashA:Int, entityHashB:Int) extends Action {
+case class ExplorationDouble(entityHashA:Set[String], entityHashB:Set[String]) extends Action {
 
   // These methods make sure this action is commutable for its arguments
   override def canEqual(that: Any): Boolean = that.isInstanceOf[ExplorationDouble]
@@ -19,6 +19,6 @@ case class ExplorationDouble(entityHashA:Int, entityHashB:Int) extends Action {
 
 }
 
-case class Exploitation(entityHashA:Int, entityHashB:Int) extends Action
+case class Exploitation(entityHashA:Set[String], entityHashB:Set[String]) extends Action
 
 case object RandomAction extends Action
