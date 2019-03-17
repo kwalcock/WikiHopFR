@@ -4,12 +4,14 @@ import java.io.File
 
 import com.typesafe.config.ConfigFactory
 import org.apache.lucene.analysis.standard.StandardAnalyzer
-import org.apache.lucene.index.DirectoryReader
+import org.apache.lucene.index.{DirectoryReader, Term}
 import org.apache.lucene.queryparser.classic.QueryParser
-import org.apache.lucene.search.IndexSearcher
+import org.apache.lucene.queryparser.xml.builders.BooleanQueryBuilder
+import org.apache.lucene.search._
 import org.apache.lucene.store.NIOFSDirectory
 import org.ml4ai.mdp.{Exploitation, Exploration, ExplorationDouble, RandomAction}
 import org.sarsamora.actions.Action
+
 import collection.JavaConverters._
 
 /**
@@ -29,8 +31,7 @@ object LuceneHelper {
   // Do the actual IR
   def retrieveDocumentNames(action: Action, instanceToFilter:Option[String] = None):Set[String] = {
     // Build the query
-    val queryString = actionToQuery(action)
-    val query = queryParser.parse(queryString)
+    val query = actionToQuery(action)
 
     // Execute the query
     val maxHits = 100 // TODO: Change this to potentially unbounded
@@ -48,11 +49,43 @@ object LuceneHelper {
     * @param action That defines the desired query
     * @return Lucene query characterized by action
     */
-  private def actionToQuery(action: Action):String = action match {
-    case Exploration(a) => ""
-    case ExplorationDouble(a, b) => ""
-    case Exploitation(a, b) => ""
-    case RandomAction => ""
+  private def actionToQuery(action: Action):Query = action match {
+    case Exploration(a) => entityTermsDisjunction(a)
+    case ExplorationDouble(a, b) =>
+      val queryA = entityTermsDisjunction(a)
+      val queryB = entityTermsDisjunction(b)
+
+      val builder = new BooleanQuery.Builder
+      builder.add(new BooleanClause(queryA, BooleanClause.Occur.SHOULD))
+      builder.add(new BooleanClause(queryB, BooleanClause.Occur.SHOULD))
+
+      builder.build()
+    case Exploitation(a, b) =>
+      val queryA = entityTermsDisjunction(a)
+      val queryB = entityTermsDisjunction(b)
+
+      val builder = new BooleanQuery.Builder
+      builder.add(new BooleanClause(queryA, BooleanClause.Occur.MUST))
+      builder.add(new BooleanClause(queryB, BooleanClause.Occur.MUST))
+
+      builder.build()
+    // TODO do this!!!
+    case RandomAction => throw new UnsupportedOperationException("Still have to implement this!!")
+  }
+
+
+  private def entityTermsDisjunction(entityTerms:Set[String]):BooleanQuery = {
+
+    val termQueries = entityTerms map (t => new TermQuery(new Term("contents", t)))
+
+    val queryBuilder = new BooleanQuery.Builder
+
+    termQueries foreach {
+      term =>
+        queryBuilder.add(term, BooleanClause.Occur.MUST)
+    }
+
+    queryBuilder.build()
   }
 
 
