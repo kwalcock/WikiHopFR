@@ -3,33 +3,15 @@ package org.ml4ai.ir
 import java.io.File
 
 import com.typesafe.config.ConfigFactory
-import org.ml4ai.utils.{WikiHopParser, md5Hash}
-import org.apache.lucene.analysis.standard.StandardAnalyzer
+import com.typesafe.scalalogging.LazyLogging
+import org.ml4ai.utils.WikiHopParser
 import org.apache.lucene.index.IndexWriterConfig
 import org.apache.lucene.store.NIOFSDirectory
 import org.apache.lucene.index.IndexWriter
-import org.apache.lucene.document.{Document, Field, StringField, TextField}
-import org.apache.lucene.document.StringField
+import org.ml4ai.ir.LuceneHelper.{addToIndex, analyzer}
 
 
-object IndexerApp extends App{
-
-  def addToIndex(writer: IndexWriter, value: String):Unit = {
-    val hash = md5Hash(value)
-
-    try {
-      val doc = new Document
-      doc.add(new TextField("contents", value, Field.Store.YES))
-      doc.add(new StringField("hash", hash, Field.Store.YES))
-
-      writer.addDocument(doc)
-    } catch {
-      case exception: Exception =>
-        println(s"Problem indexing: $value")
-        println(exception.getMessage)
-    }
-  }
-
+object IndexerApp extends App with LazyLogging {
 
   val config = ConfigFactory.load()
   val indexDir = new File(config.getString("lucene.directoryIndex"))
@@ -39,9 +21,6 @@ object IndexerApp extends App{
   }
 
   val documents = WikiHopParser.allDocuments
-
-
-  val analyzer = new StandardAnalyzer
   val index = new NIOFSDirectory(indexDir.toPath)
 
   val ixWConfig = new IndexWriterConfig(analyzer)
@@ -50,7 +29,7 @@ object IndexerApp extends App{
 
   documents.zipWithIndex foreach {
     case (d, i) =>
-      println(s"indexing $i")
+      logger.info(s"indexing $i")
       addToIndex(w, d)
   }
 

@@ -5,14 +5,14 @@ import java.io.File
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
 import org.apache.lucene.analysis.standard.StandardAnalyzer
-import org.apache.lucene.index.{DirectoryReader, Term}
-import org.apache.lucene.queryparser.classic.QueryParser
-import org.apache.lucene.queryparser.xml.builders.BooleanQueryBuilder
+import org.apache.lucene.index.{DirectoryReader, IndexWriter, Term}
 import org.apache.lucene.search._
 import org.apache.lucene.store.NIOFSDirectory
 import org.ml4ai.mdp.{Exploitation, Exploration, ExplorationDouble, RandomAction}
 import org.sarsamora.actions.Action
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
+import org.apache.lucene.document.{Document, Field, StringField, TextField}
+import org.ml4ai.utils.md5Hash
 
 import collection.JavaConverters._
 import scala.collection.mutable
@@ -25,10 +25,13 @@ object LuceneHelper extends LazyLogging {
   // State values
   private val config = ConfigFactory.load()
   private val indexDir = new File(config.getString("lucene.directoryIndex"))
-  private val analyzer = new StandardAnalyzer
   private val index = new NIOFSDirectory(indexDir.toPath)
   private val reader = DirectoryReader.open(index)
-  private implicit val searcher = new IndexSearcher(reader)
+  private val searcher = new IndexSearcher(reader)
+  private val maxResults = reader.numDocs // Make the upper bound be the number of documents in the index
+
+
+  lazy val analyzer = new StandardAnalyzer()
 
   // Do the actual IR
   def retrieveDocumentNames(action: Action, instanceToFilter:Option[Set[String]] = None, searcher:IndexSearcher = searcher):Set[String] = {
@@ -36,8 +39,7 @@ object LuceneHelper extends LazyLogging {
     val query = actionToQuery(action)
 
     // Execute the query
-    val maxHits = 100 // TODO: Change this to potentially unbounded
-    val topDocs = searcher.search(query, maxHits)
+    val topDocs = searcher.search(query, maxResults)
 
     //Generate the result
     val result =
@@ -79,7 +81,6 @@ object LuceneHelper extends LazyLogging {
       builder.add(new BooleanClause(queryB, BooleanClause.Occur.MUST))
 
       builder.build()
-    // TODO do this!!!
     case RandomAction =>
       logger.error("Can't build a query for the RandomAction. Should have been dealt with before this point")
       throw new UnsupportedOperationException("No lucene functionality for a random query")
@@ -88,8 +89,8 @@ object LuceneHelper extends LazyLogging {
 
   private def entityTermsDisjunction(entityTerms:Set[String]):BooleanQuery = {
 
-    val analizedTerms = analyzeTerms(entityTerms)
-    val termQueries = analizedTerms map (t => new TermQuery(new Term("contents", t)))
+    val analyzedTerms = analyzeTerms(entityTerms)
+    val termQueries = analyzedTerms map (t => new TermQuery(new Term("contents", t)))
 
     val queryBuilder = new BooleanQuery.Builder
 
@@ -115,6 +116,28 @@ object LuceneHelper extends LazyLogging {
       tokenStream.end()
       tokenStream.close()
       tokens.toSet
+  }
+
+  /**
+    * Adds a document to a provided index writer using the correct schema and analyzer
+    * @param writer Previously configured index writer
+    * @param value Text of the document to add to the index
+    */
+  def addToIndex(writer: IndexWriter, value: String):Unit = {
+    // The hash will be the "title" of the document
+    val hash = md5Hash(value)
+
+    try {
+      val doc = new Document
+      doc.add(new TextField("contents", value, Field.Store.YES))
+      doc.add(new StringField("hash", hash, Field.Store.YES))
+
+      writer.addDocument(doc)
+    } catch {
+      case exception: Exception =>
+        logger.error(s"Problem indexing: $value")
+        logger.error(exception.getMessage)
+    }
   }
 
 
