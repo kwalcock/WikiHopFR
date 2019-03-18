@@ -11,8 +11,10 @@ import org.apache.lucene.search._
 import org.apache.lucene.store.NIOFSDirectory
 import org.ml4ai.mdp.{Exploitation, Exploration, ExplorationDouble, RandomAction}
 import org.sarsamora.actions.Action
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
 
 import collection.JavaConverters._
+import scala.collection.mutable
 
 /**
   * Utilities to interface with the lucene index
@@ -25,11 +27,10 @@ object LuceneHelper {
   private val analyzer = new StandardAnalyzer
   private val index = new NIOFSDirectory(indexDir.toPath)
   private val reader = DirectoryReader.open(index)
-  private val searcher = new IndexSearcher(reader)
-  private val queryParser = new QueryParser("contents", analyzer)
+  private implicit val searcher = new IndexSearcher(reader)
 
   // Do the actual IR
-  def retrieveDocumentNames(action: Action, instanceToFilter:Option[String] = None):Set[String] = {
+  def retrieveDocumentNames(action: Action, instanceToFilter:Option[Set[String]] = None, searcher:IndexSearcher = searcher):Set[String] = {
     // Build the query
     val query = actionToQuery(action)
 
@@ -38,10 +39,18 @@ object LuceneHelper {
     val topDocs = searcher.search(query, maxHits)
 
     //Generate the result
-    (for(hit <- topDocs.scoreDocs) yield {
-      val doc = searcher.doc(hit.doc, Set("hash").asJava)
-      doc.get("hash")
-    }).toSet
+    val result =
+      (for(hit <- topDocs.scoreDocs) yield {
+        val doc = searcher.doc(hit.doc, Set("hash").asJava)
+        doc.get("hash")
+      }).toSet
+
+    instanceToFilter match {
+      case Some(criteria) =>
+        result intersect criteria
+      case None =>
+        result
+    }
   }
 
   /**
@@ -76,7 +85,8 @@ object LuceneHelper {
 
   private def entityTermsDisjunction(entityTerms:Set[String]):BooleanQuery = {
 
-    val termQueries = entityTerms map (t => new TermQuery(new Term("contents", t)))
+    val analizedTerms = analyzeTerms(entityTerms)
+    val termQueries = analizedTerms map (t => new TermQuery(new Term("contents", t)))
 
     val queryBuilder = new BooleanQuery.Builder
 
@@ -86,6 +96,22 @@ object LuceneHelper {
     }
 
     queryBuilder.build()
+  }
+
+
+  // Taken from https://lucene.apache.org/core/7_2_1/core/org/apache/lucene/analysis/package-summary.html
+  private def analyzeTerms(entityTerms:Set[String]):Set[String] = entityTerms flatMap {
+    term =>
+      val tokenStream = analyzer.tokenStream("contents", term)
+      val termAtt: CharTermAttribute = tokenStream.addAttribute(classOf[CharTermAttribute])
+      val tokens = new mutable.HashSet[String]
+      tokenStream.reset()
+      while(tokenStream.incrementToken()){
+        tokens += termAtt.toString
+      }
+      tokenStream.end()
+      tokenStream.close()
+      tokens.toSet
   }
 
 

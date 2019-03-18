@@ -130,7 +130,7 @@ class WikiHopEnvironment(start:String, end:String) extends Environment {
     // The first element is the random action, therefore we will operate on the tail
     possibleActions.tail(ix)
   }
-  
+
 
   override def observeState: State = WikiHopState(iterationNum)
 
