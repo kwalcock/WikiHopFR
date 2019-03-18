@@ -3,14 +3,15 @@ package org.ml4ai.mdp
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
 import org.ml4ai.WikiHopInstance
-import org.ml4ai.inference.{CoocurrenceKnowledgeGraph, KnowledgeGraph, Relation}
+import org.ml4ai.inference.{CoocurrenceKnowledgeGraph, KnowledgeGraph}
 import org.ml4ai.ir.LuceneHelper
 import org.ml4ai.utils.{AnnotationsLoader, WikiHopParser}
 import org.sarsamora.actions.Action
 import org.sarsamora.environment.Environment
 import org.sarsamora.states.State
+import org.ml4ai.utils.rng
 
-import collection.Set
+//import collection.Set
 import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 
@@ -106,10 +107,12 @@ class WikiHopEnvironment(start:String, end:String) extends Environment {
   override def execute(action: Action, persist: Boolean): Double = {
     // Increment the iteration counter
     iterationNum += 1
-    // TODO: Convert the action into a lucene query
-    // TODO: Fetch documents from lucene query
-//    val fetchedDocs = Set.empty[String]
-    val fetchedDocs = LuceneHelper.retrieveDocumentNames(action)
+    // If the random action is selected, transform it to a concrete action randomly
+    val finalAction = action match {
+      case RandomAction => buildRandomAction
+      case a:Action => a
+    }
+    val fetchedDocs = LuceneHelper.retrieveDocumentNames(finalAction)
     // Generate new KG from the documents
     val kg = new KG(fetchedDocs)
     val reward = rewardSignal(action, kg, fetchedDocs)
@@ -118,6 +121,23 @@ class WikiHopEnvironment(start:String, end:String) extends Environment {
     knowledgeGraph = Some(kg)
 
     reward
+  }
+
+
+  private def buildRandomAction():Action = {
+    val randomInt:Int = rng.nextInt(3)
+
+    val a:Set[String] = ??? //sampleRandomEntity()
+    randomInt match {
+      case 0 => Exploration(a)
+      case 1 =>
+        val b:Set[String] = ??? //sampleRandomEntity()
+        ExplorationDouble(a, b)
+      case 2 =>
+        Exploitation(a, end.split(" ").toSet)
+      case _ =>
+        throw new UnsupportedOperationException("Error in the random action generator. Unspecified action code.")
+    }
   }
 
   override def observeState: State = WikiHopState(iterationNum)

@@ -7,6 +7,7 @@ import org.clulab.processors.shallownlp.ShallowNLPProcessor
 import scala.io.Source
 import scala.language.reflectiveCalls
 import scala.util.hashing.MurmurHash3
+import scala.util.Random
 
 package object utils {
 
@@ -55,4 +56,8 @@ package object utils {
   }
 
   def filterUselessLemmas(lemmas: Iterable[String]): Iterable[String] = lemmas.map(_.toLowerCase).filter(!stopLemmas.contains(_))
+
+  // Set random seed to our global random number generator
+  lazy val rng:Random = new Random(1024)
+
 }
