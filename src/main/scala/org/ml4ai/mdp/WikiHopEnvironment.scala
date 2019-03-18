@@ -109,7 +109,7 @@ class WikiHopEnvironment(start:String, end:String) extends Environment {
     iterationNum += 1
     // If the random action is selected, transform it to a concrete action randomly
     val finalAction = action match {
-      case RandomAction => buildRandomAction
+      case RandomAction => selectActionRandomly
       case a:Action => a
     }
     val fetchedDocs = LuceneHelper.retrieveDocumentNames(finalAction)
@@ -123,22 +123,14 @@ class WikiHopEnvironment(start:String, end:String) extends Environment {
     reward
   }
 
-
-  private def buildRandomAction():Action = {
-    val randomInt:Int = rng.nextInt(3)
-
-    val a:Set[String] = ??? //sampleRandomEntity()
-    randomInt match {
-      case 0 => Exploration(a)
-      case 1 =>
-        val b:Set[String] = ??? //sampleRandomEntity()
-        ExplorationDouble(a, b)
-      case 2 =>
-        Exploitation(a, end.split(" ").toSet)
-      case _ =>
-        throw new UnsupportedOperationException("Error in the random action generator. Unspecified action code.")
-    }
+  private def selectActionRandomly:Action = {
+    // Select an index randomly
+    // Subtract one because we won't consider the element corresponding to the random action
+    val ix = rng.nextInt(possibleActions.size - 1)
+    // The first element is the random action, therefore we will operate on the tail
+    possibleActions.tail(ix)
   }
+  
 
   override def observeState: State = WikiHopState(iterationNum)
 
