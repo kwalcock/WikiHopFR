@@ -3,6 +3,7 @@ package org.ml4ai.ir
 import java.io.File
 
 import com.typesafe.config.ConfigFactory
+import com.typesafe.scalalogging.LazyLogging
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.index.{DirectoryReader, Term}
 import org.apache.lucene.queryparser.classic.QueryParser
@@ -19,7 +20,7 @@ import scala.collection.mutable
 /**
   * Utilities to interface with the lucene index
   */
-object LuceneHelper {
+object LuceneHelper extends LazyLogging {
 
   // State values
   private val config = ConfigFactory.load()
@@ -79,7 +80,9 @@ object LuceneHelper {
 
       builder.build()
     // TODO do this!!!
-    case RandomAction => throw new UnsupportedOperationException("Still have to implement this!!")
+    case RandomAction =>
+      logger.error("Can't build a query for the RandomAction. Should have been dealt with before this point")
+      throw new UnsupportedOperationException("No lucene functionality for a random query")
   }
 
 

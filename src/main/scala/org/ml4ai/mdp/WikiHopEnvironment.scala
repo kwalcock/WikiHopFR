@@ -117,8 +117,9 @@ class WikiHopEnvironment(start:String, end:String) extends Environment {
     val kg = new KG(fetchedDocs)
     val reward = rewardSignal(action, kg, fetchedDocs)
 
-    // Update the knowledge graph
+    // Update the knowledge graph and keep track of the new papers
     knowledgeGraph = Some(kg)
+    papersRead ++= fetchedDocs
 
     reward
   }
