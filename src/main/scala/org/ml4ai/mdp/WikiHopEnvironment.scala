@@ -3,7 +3,7 @@ package org.ml4ai.mdp
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
 import org.ml4ai.WikiHopInstance
-import org.ml4ai.inference.{CoocurrenceKnowledgeGraph, KnowledgeGraph}
+import org.ml4ai.inference.{CoocurrenceKnowledgeGraph, KnowledgeGraph, VerboseRelation}
 import org.ml4ai.ir.LuceneHelper
 import org.ml4ai.utils.{AnnotationsLoader, WikiHopParser}
 import org.sarsamora.actions.Action
@@ -142,7 +142,7 @@ class WikiHopEnvironment(start:String, end:String) extends Environment {
     else{
       knowledgeGraph match {
         case Some(kg) =>
-          val paths = kg.findPath(start, end)
+          val paths = outcome
           if(paths.nonEmpty)
             true
           else
@@ -150,6 +150,11 @@ class WikiHopEnvironment(start:String, end:String) extends Environment {
         case None => false
       }
     }
+  }
+
+  def outcome:Iterable[Seq[VerboseRelation]] = knowledgeGraph match {
+    case Some(kg) => kg.findPath(start, end)
+    case None => Seq.empty
   }
 
 }

@@ -1,35 +1,48 @@
 package org.ml4ai.agents
 
 import org.ml4ai.WikiHopInstance
+import org.ml4ai.inference.VerboseRelation
 import org.ml4ai.mdp.WikiHopEnvironment
 import org.sarsamora.actions.Action
 
 /**
   * Base class to all of the agent implementations
-  * @param instance of WikiHop to operate over
   */
-abstract class BaseAgent(instance:WikiHopInstance) {
-
-  // Generate the end points
-  // TODO: Verify this is correct
-  protected val source: String = instance.query.split(" ").last
-  protected val destination: String = instance.answer match {
-    case Some(ans) => ans
-    case None =>
-      throw new UnsupportedOperationException("For now, only training instances are supported")
-  }
-
-  // TODO: Tweak here if we do FR over all the corpus
-  protected val documentUniverse: Set[String] = instance.supportDocs.toSet
-
-  // Build the environment with the source and destination
-  // This is public as the MDP handler needs it
-  val environment: WikiHopEnvironment = new WikiHopEnvironment(source, destination)
+abstract class BaseAgent {
 
   /**
-    * Selects an action from those available from the environment
+    * Selects an action from those available from the environment within runEpoch
     * @return Action selected from the environment associate to this agent
     */
-  def selectAction:Action
+  protected def selectAction(environment: WikiHopEnvironment):Action
+
+  /**
+    * Runs the MDP over an environment. Must be overridden by the implementor
+    * @return The output paths found by the agent
+    */
+  def runEpoch(environment: WikiHopEnvironment):Iterable[Seq[VerboseRelation]]
+
+
+  /**
+    * Convenience overload that generates an environment from a training instance
+    * @param instance WikiHop instance to create an environment from
+    * @return The output paths found by the agent
+    */
+  def runEpoch(instance:WikiHopInstance):Iterable[Seq[VerboseRelation]] = {
+    // Generate the end points
+    // TODO: Verify this is correct
+    val source: String = instance.query.split(" ").last
+    val destination: String = instance.answer match {
+      case Some(ans) => ans
+      case None =>
+        throw new UnsupportedOperationException("For now, only training instances are supported")
+    }
+
+    // Build the environment with the source and destination
+    // This is public as the MDP handler needs it
+    val environment: WikiHopEnvironment = new WikiHopEnvironment(source, destination)
+
+    runEpoch(environment)
+  }
 
 }

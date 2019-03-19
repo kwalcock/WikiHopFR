@@ -3,8 +3,8 @@ package org.ml4ai
 import org.scalatest.{FlatSpec, Matchers}
 import org.apache.lucene.index.{DirectoryReader, IndexWriter, IndexWriterConfig}
 import org.apache.lucene.store.{FSDirectory, RAMDirectory}
-import org.ml4ai.ir.{IndexerApp, LuceneHelper}
-import IndexerApp.{addToIndex, analyzer}
+import org.ml4ai.ir.LuceneHelper
+import LuceneHelper.addToIndex
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.search.IndexSearcher
 import org.ml4ai.mdp.{Exploitation, Exploration, ExplorationDouble}
