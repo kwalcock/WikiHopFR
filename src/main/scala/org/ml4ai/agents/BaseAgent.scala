@@ -20,7 +20,7 @@ abstract class BaseAgent {
     * Runs the MDP over an environment. Must be overridden by the implementor
     * @return The output paths found by the agent
     */
-  def runEpoch(environment: WikiHopEnvironment):Iterable[Seq[VerboseRelation]]
+  def runEpisode(environment: WikiHopEnvironment):Iterable[Seq[VerboseRelation]]
 
 
   /**
@@ -28,7 +28,7 @@ abstract class BaseAgent {
     * @param instance WikiHop instance to create an environment from
     * @return The output paths found by the agent
     */
-  def runEpoch(instance:WikiHopInstance):Iterable[Seq[VerboseRelation]] = {
+  def runEpisode(instance:WikiHopInstance):Iterable[Seq[VerboseRelation]] = {
     // Generate the end points
     // TODO: Verify this is correct
     val source: String = instance.query.split(" ").last
@@ -42,7 +42,7 @@ abstract class BaseAgent {
     // This is public as the MDP handler needs it
     val environment: WikiHopEnvironment = new WikiHopEnvironment(source, destination)
 
-    runEpoch(environment)
+    runEpisode(environment)
   }
 
 }
