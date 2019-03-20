@@ -3,7 +3,7 @@ package org.ml4ai.mdp
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
 import org.ml4ai.WikiHopInstance
-import org.ml4ai.inference.{CoocurrenceKnowledgeGraph, KnowledgeGraph, VerboseRelation}
+import org.ml4ai.inference.{ActionStarvationException, CoocurrenceKnowledgeGraph, KnowledgeGraph, VerboseRelation}
 import org.ml4ai.ir.LuceneHelper
 import org.ml4ai.utils.{AnnotationsLoader, WikiHopParser}
 import org.sarsamora.actions.Action
@@ -15,7 +15,7 @@ import org.ml4ai.utils.rng
 import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 
-class WikiHopEnvironment(start:String, end:String, documentUniverse:Option[Set[String]] = None) extends Environment {
+class WikiHopEnvironment(start:String, end:String, documentUniverse:Option[Set[String]] = None) extends Environment with LazyLogging {
 
   private implicit val loader:AnnotationsLoader = WikiHopEnvironment.annotationsLoader
 
@@ -79,6 +79,10 @@ class WikiHopEnvironment(start:String, end:String, documentUniverse:Option[Set[S
           ret.toList
       }
 
+
+    if(actions.isEmpty)
+      throw new ActionStarvationException
+
     // Prepend the random action to the list of candidate actions
     RandomAction :: actions
   }
@@ -101,7 +105,9 @@ class WikiHopEnvironment(start:String, end:String, documentUniverse:Option[Set[S
 
     val livingReward = 0.5
 
-    (newRelations / newPapers) - livingReward
+    val informationRatio = if(newPapers > 0) newRelations / newPapers else 0
+
+    informationRatio - livingReward
   }
 
   override def execute(action: Action, persist: Boolean): Double = {
@@ -114,7 +120,7 @@ class WikiHopEnvironment(start:String, end:String, documentUniverse:Option[Set[S
     }
     val fetchedDocs = LuceneHelper.retrieveDocumentNames(finalAction, instanceToFilter = documentUniverse)
     // Generate new KG from the documents
-    val kg = new KG(fetchedDocs)
+    val kg = new KG(fetchedDocs union papersRead)
     val reward = rewardSignal(action, kg, fetchedDocs)
 
     // Update the knowledge graph and keep track of the new papers
@@ -139,23 +145,36 @@ class WikiHopEnvironment(start:String, end:String, documentUniverse:Option[Set[S
     //TODO: Consider quiting if the state didn't change after an action.
     if(iterationNum >= maxIterations)
       true
-    else{
-      knowledgeGraph match {
-        case Some(kg) =>
-          val paths = outcome
-          if(paths.nonEmpty)
+      else {
+        Try(possibleActions) match {
+          case Failure(s:ActionStarvationException) =>
+            logger.debug("Action Starvation")
             true
-          else
-            false
-        case None => false
+          case _ =>
+            knowledgeGraph match {
+              case Some(_) =>
+                val paths = outcome
+                if (paths.nonEmpty)
+                  true
+                else
+                  false
+              case None => false
+            }
+        }
       }
-    }
   }
 
   // TODO cache a successful result for performance reasons
   def outcome:Iterable[Seq[VerboseRelation]] = knowledgeGraph match {
-    case Some(kg) => kg.findPath(start, end)
-    case None => Seq.empty
+    case Some(kg) =>
+      Try(kg.findPath(start, end)) match {
+        case Success(v) => v
+        case Failure(e) =>
+          logger.error(s"$e - ${e.getMessage}")
+          Seq.empty
+      }
+    case None =>
+      Seq.empty
   }
 
 }
