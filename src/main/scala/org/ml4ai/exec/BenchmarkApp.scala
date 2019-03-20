@@ -17,8 +17,9 @@ object BenchmarkApp extends App with LazyLogging{
   // Read the instances
   val config = ConfigFactory.load()
 
-  val instances = WikiHopParser.trainingInstances.take(1000)
-  logger.info(s"About to run FocusedReading on ${instances.size} instances")
+  val instances = WikiHopParser.trainingInstances//.take(1000)
+  val totalInstances = instances.size
+  logger.info(s"About to run FocusedReading on $totalInstances instances")
 
   // TODO: Make this configurable
   val agent = new RandomActionAgent
@@ -46,7 +47,23 @@ object BenchmarkApp extends App with LazyLogging{
     }
 
   val outcomes = Future.sequence(runs)
-  Await.result(outcomes, Duration.Inf)
+
+  // Crunch the numbers with the results. This is a side-effect deferred function
+  val stats =
+    outcomes andThen {
+      case Success(os) =>
+
+        val successes = os count {case (_, paths) => paths.nonEmpty}
+
+        val successRate = successes / totalInstances.toDouble
+
+        logger.info(s"Success rate of $successRate. Found a path on $successes out of $totalInstances instances")
+
+      case Failure(exception) =>
+        logger.error(exception.toString)
+    }
+
+  Await.ready(stats, Duration.Inf)
 
   // Crunch the numbers with the results
 //  val numPaths =
