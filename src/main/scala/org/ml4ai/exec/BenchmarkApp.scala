@@ -2,10 +2,12 @@ package org.ml4ai.exec
 
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
+import org.ml4ai.agents.StatsObserver
 import org.ml4ai.agents.baseline.RandomActionAgent
 import org.ml4ai.utils.WikiHopParser
 
 import concurrent.{Await, ExecutionContext, Future}
+import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success, Try}
 
@@ -17,7 +19,7 @@ object BenchmarkApp extends App with LazyLogging{
   // Read the instances
   val config = ConfigFactory.load()
 
-  val instances = WikiHopParser.trainingInstances//.take(1000)
+  val instances = WikiHopParser.trainingInstances//.take(100)
   val totalInstances = instances.size
   logger.info(s"About to run FocusedReading on $totalInstances instances")
 
@@ -31,9 +33,9 @@ object BenchmarkApp extends App with LazyLogging{
   val runs =
     for(instance <- instances) yield Future{
       logger.info(s"Starting ${instance.id}")
-      // TODO implement an observer pattern to keep track of metrics in an uncluttered fashion
+      val observer = new StatsObserver
       // Return the instance id along with the outcomes
-      val outcome = Try(agent.runEpisode(instance)) match {
+      val outcome = Try(agent.runEpisode(instance, monitor=Some(observer))) match {
         case Success(paths) =>
           paths
         case Failure(exception) =>
@@ -41,7 +43,7 @@ object BenchmarkApp extends App with LazyLogging{
           Iterable.empty
         }
 
-      val ret = (instance.id, outcome)
+      val ret = (instance.id, outcome, observer)
       logger.info(s"Finished ${instance.id}")
       ret
     }
@@ -53,11 +55,16 @@ object BenchmarkApp extends App with LazyLogging{
     outcomes andThen {
       case Success(os) =>
 
-        val successes = os count {case (_, paths) => paths.nonEmpty}
+        val successes = os count {case (_, paths, _) => paths.nonEmpty}
 
         val successRate = successes / totalInstances.toDouble
 
+        val (iterationDistribution, paperDistribution, actionDistribution) = crunchNumbers(os.map(_._3))
+
         logger.info(s"Success rate of $successRate. Found a path on $successes out of $totalInstances instances")
+        logger.info(s"Iteration distribution: ${prettyPrintMap(iterationDistribution)}")
+        logger.info(s"Papers distribution: ${prettyPrintMap(paperDistribution)}")
+        logger.info(s"Action distribution: ${prettyPrintMap(actionDistribution)}")
 
       case Failure(exception) =>
         logger.error(exception.toString)
@@ -65,7 +72,28 @@ object BenchmarkApp extends App with LazyLogging{
 
   Await.ready(stats, Duration.Inf)
 
-  // Crunch the numbers with the results
-//  val numPaths =
-//    outcomes.value.get.collect(o => o)
+  def crunchNumbers(observers:Iterable[StatsObserver]) = {
+    val iterationNumDistribution = observers.map(_.iterations.get).groupBy(identity).mapValues(_.size)
+    val papersDistribution = observers.map(_.papersRead.get).groupBy(identity).mapValues(_.size)
+    val acc = new mutable.HashMap[Int, Int].withDefaultValue(0)
+
+    for(curr <- observers.map(_.actionDistribution)){
+      acc(StatsObserver.EXPLORATION) += curr(StatsObserver.EXPLORATION)
+      acc(StatsObserver.EXPLORATION_DOUBLE) += curr(StatsObserver.EXPLORATION_DOUBLE)
+      acc(StatsObserver.EXPLOITATION) += curr(StatsObserver.EXPLOITATION)
+      acc(StatsObserver.RANDOM) += curr(StatsObserver.RANDOM)
+    }
+
+    (iterationNumDistribution, papersDistribution, acc.toMap)
+  }
+
+  def prettyPrintMap(m:Map[Int, Int]):String = {
+    val buf = new mutable.StringBuilder("\n")
+    val entries = m.toSeq.sortBy{case (k, v) => v}.reverse
+    entries foreach {
+      case (k, v) =>
+        buf.append(s"$k: $v\n")
+    }
+    buf.toString()
+  }
 }

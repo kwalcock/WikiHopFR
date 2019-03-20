@@ -177,6 +177,9 @@ class WikiHopEnvironment(start:String, end:String, documentUniverse:Option[Set[S
       Seq.empty
   }
 
+  def iterations:Int = iterationNum
+  def consultedPapers:Set[String] = papersRead.toSet
+
 }
 
 object WikiHopEnvironment extends LazyLogging {
