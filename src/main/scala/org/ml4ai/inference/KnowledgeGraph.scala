@@ -137,14 +137,14 @@ abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) extends Laz
 
         s shortestPathTo d match {
           case Some(path) =>
-            println(path.length)
+            logger.debug(s"${path.length}")
             Some(
               path.edges.map{
                 edge => relationToVerboseRelation(edge.relation)
               }.toSeq
             )
           case None =>
-            println("No path")
+            logger.debug("No path")
             None
         }
       }
@@ -174,7 +174,7 @@ abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) extends Laz
           val label = r.attributions.map{
             attr =>
               Try {
-                val doc = loader(attr.document)
+                val doc = loader.find(attr.document)
                 val sen = doc.sentences(attr.sentenceIx)
                 attr.triple match {
                   case Some(rel) if rel.relationText(sen) == "" => "*EMPTY*"

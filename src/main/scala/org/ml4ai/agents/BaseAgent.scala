@@ -4,6 +4,7 @@ import org.ml4ai.WikiHopInstance
 import org.ml4ai.inference.VerboseRelation
 import org.ml4ai.mdp.WikiHopEnvironment
 import org.sarsamora.actions.Action
+import org.ml4ai.utils.md5Hash
 
 /**
   * Base class to all of the agent implementations
@@ -38,9 +39,11 @@ abstract class BaseAgent {
         throw new UnsupportedOperationException("For now, only training instances are supported")
     }
 
+    val documentUniverse = Some(instance.supportDocs.map(md5Hash).toSet)
+
     // Build the environment with the source and destination
     // This is public as the MDP handler needs it
-    val environment: WikiHopEnvironment = new WikiHopEnvironment(source, destination)
+    val environment: WikiHopEnvironment = new WikiHopEnvironment(source, destination, documentUniverse)
 
     runEpisode(environment)
   }

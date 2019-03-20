@@ -15,7 +15,7 @@ import org.ml4ai.utils.rng
 import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 
-class WikiHopEnvironment(start:String, end:String) extends Environment {
+class WikiHopEnvironment(start:String, end:String, documentUniverse:Option[Set[String]] = None) extends Environment {
 
   private implicit val loader:AnnotationsLoader = WikiHopEnvironment.annotationsLoader
 
@@ -90,7 +90,7 @@ class WikiHopEnvironment(start:String, end:String) extends Environment {
     */
   private def rewardSignal(action: Action, newState:KG, fetchedPapers:Set[String]):Double = {
     // TODO make the reward function more nuanced
-    val newPapers:Int = (fetchedPapers diff fetchedPapers).size
+    val newPapers:Int = (fetchedPapers diff papersRead).size
     val newRelations:Int =
       (newState.edges diff
         (knowledgeGraph match {
@@ -112,7 +112,7 @@ class WikiHopEnvironment(start:String, end:String) extends Environment {
       case RandomAction => selectActionRandomly
       case a:Action => a
     }
-    val fetchedDocs = LuceneHelper.retrieveDocumentNames(finalAction)
+    val fetchedDocs = LuceneHelper.retrieveDocumentNames(finalAction, instanceToFilter = documentUniverse)
     // Generate new KG from the documents
     val kg = new KG(fetchedDocs)
     val reward = rewardSignal(action, kg, fetchedDocs)
@@ -152,6 +152,7 @@ class WikiHopEnvironment(start:String, end:String) extends Environment {
     }
   }
 
+  // TODO cache a successful result for performance reasons
   def outcome:Iterable[Seq[VerboseRelation]] = knowledgeGraph match {
     case Some(kg) => kg.findPath(start, end)
     case None => Seq.empty

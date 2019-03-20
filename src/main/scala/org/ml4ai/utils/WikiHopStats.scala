@@ -28,7 +28,7 @@ object WikiHopStats extends App {
       instance <- trainingInstances
       text <- instance.supportDocs
     } yield {
-      val doc = loader(text)
+      val doc = loader.find(text)
 
       val extractions = doc.sentences.flatMap{
         s =>

@@ -42,15 +42,16 @@ class AnnotationsLoader(path:String, cache:Boolean = false){
     }
   }
 
-  def apply(text: String): Document =
+  def find(text:String):Document = apply(md5Hash(text))
+
+  def apply(hash: String): Document =
     if(cache) {
-      unserializedAnnotations.getOrElseUpdate(text, {
-        val hash = md5Hash(text)
+      unserializedAnnotations.getOrElseUpdate(hash, {
         val serialized = raw(hash)
         serializer.load(serialized)
       })
     }
-    else serializer.load(raw(md5Hash(text)))
+    else serializer.load(raw(hash))
 
   def contains(text:String): Boolean =
     if(!unserializedAnnotations.contains(text))
@@ -70,7 +71,7 @@ object AnnotationsLoader extends App {
 
   val s = "The 2004 Summer Olympic Games, officially known as the Games of the XXVIII Olympiad and commonly known as Athens 2004, was a premier international multi-sport event held in Athens, Greece, from 13 to 29 August 2004 with the motto \"Welcome Home.\" 10,625 athletes competed, some 600 more than expected, accompanied by 5,501 team officials from 201 countries. There were 301 medal events in 28 different sports. Athens 2004 marked the first time since the 1996 Summer Olympics that all countries with a National Olympic Committee were in attendance. 2004 marked the return of the games to the city where they began."
 
-  val d = loader(s)
-  val d2 = loader(s)
+  val d = loader.find(s)
+  val d2 = loader.find(s)
   val x = 1
 }
