@@ -7,11 +7,12 @@
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
 
-        <!--<filter class="ch.qos.logback.classic.filter.LevelFilter">-->
-            <!--<level>ERROR</level>-->
-            <!--<onMatch>DENY</onMatch>-->
-            <!--<onMismatch>ACCEPT</onMismatch>-->
-        <!--</filter>-->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+
     </appender>
 
 
@@ -23,8 +24,36 @@
         </filter>
         <file>error.log</file>
         <append>false</append>
-        <!-- set immediateFlush to false for much higher logging throughput -->
-        <immediateFlush>false</immediateFlush>
+        <!-- encoders are assigned the type
+             ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="DEBUGFILE" class="ch.qos.logback.core.FileAppender">
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>DEBUG</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <file>debug.log</file>
+        <append>false</append>
+        <!-- encoders are assigned the type
+             ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="INFOFILE" class="ch.qos.logback.core.FileAppender">
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <file>info.log</file>
+        <append>false</append>
         <!-- encoders are assigned the type
              ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
         <encoder>
@@ -35,6 +64,8 @@
     <root level="debug">
         <appender-ref ref="STDOUT" />
         <appender-ref ref="ERRORFILE" />
+        <appender-ref ref="DEBUGFILE" />
+        <appender-ref ref="INFOFILE" />
     </root>
 
 </configuration>

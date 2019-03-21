@@ -75,19 +75,19 @@ object BenchmarkApp extends App with LazyLogging{
   def crunchNumbers(observers:Iterable[StatsObserver]) = {
     val iterationNumDistribution = observers.map(_.iterations.get).groupBy(identity).mapValues(_.size)
     val papersDistribution = observers.map(_.papersRead.get).groupBy(identity).mapValues(_.size)
-    val acc = new mutable.HashMap[Int, Int].withDefaultValue(0)
+    val acc = new mutable.HashMap[String, Int].withDefaultValue(0)
 
     for(curr <- observers.map(_.actionDistribution)){
-      acc(StatsObserver.EXPLORATION) += curr(StatsObserver.EXPLORATION)
-      acc(StatsObserver.EXPLORATION_DOUBLE) += curr(StatsObserver.EXPLORATION_DOUBLE)
-      acc(StatsObserver.EXPLOITATION) += curr(StatsObserver.EXPLOITATION)
-      acc(StatsObserver.RANDOM) += curr(StatsObserver.RANDOM)
+      acc("EXPLORATION") += curr(StatsObserver.EXPLORATION)
+      acc("EXPLORATION_DOUBLE") += curr(StatsObserver.EXPLORATION_DOUBLE)
+      acc("EXPLOITATION") += curr(StatsObserver.EXPLOITATION)
+      acc("RANDOM") += curr(StatsObserver.RANDOM)
     }
 
     (iterationNumDistribution, papersDistribution, acc.toMap)
   }
 
-  def prettyPrintMap(m:Map[Int, Int]):String = {
+  def prettyPrintMap[K](m:Map[K, Int]):String = {
     val buf = new mutable.StringBuilder("\n")
     val entries = m.toSeq.sortBy{case (k, v) => v}.reverse
     entries foreach {
