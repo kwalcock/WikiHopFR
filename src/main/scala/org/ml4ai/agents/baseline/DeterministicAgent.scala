@@ -15,23 +15,32 @@ abstract class DeterministicAgent extends BaseAgent{
     * @return The output paths found by the agent
     */
   override def runEpisode(environment: WikiHopEnvironment, monitor:Option[AgentObserver]): Iterable[Seq[VerboseRelation]] = {
-    // Base case in which the episode has finished and the outcome can be observed
-    if(environment.finishedEpisode){
-      for(m <- monitor)
-        m.endedEpisode(environment)
+    // Call an inner function to keep this strictly tail-recursive
+    def helper(environment: WikiHopEnvironment, monitor: Option[AgentObserver]) = {
+      // Base case in which the episode has finished and the outcome can be observed
+      if (environment.finishedEpisode) {
+        for (m <- monitor)
+          m.endedEpisode(environment)
 
-      environment.outcome
+        environment.outcome
+      }
+      else {
+        // Select an action
+        val action = selectAction(environment)
+        // Execute it
+        val reward = environment.execute(action)
+        // Log it to the monitor
+        for (m <- monitor)
+          m.actionTaken(action, reward, environment)
+        // Tail recursion
+        runEpisode(environment, monitor)
+      }
     }
-    else{
-      // Select an action
-      val action = selectAction(environment)
-      // Execute it
-      val reward = environment.execute(action)
-      // Log it to the monitor
-      for(m <- monitor)
-        m.actionTaken(action, reward, environment)
-      // Tail recursion
-      runEpisode(environment, monitor)
-    }
+
+    // Before starting, call the monitor
+    for(m <- monitor) m.startedEpisode(environment)
+
+    // Do the actual job
+    helper(environment, monitor)
   }
 }
