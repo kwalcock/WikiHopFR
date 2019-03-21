@@ -59,7 +59,7 @@ object BenchmarkApp extends App with LazyLogging{
 
         val successRate = successes / totalInstances.toDouble
 
-        val (iterationDistribution, paperDistribution, actionDistribution) = crunchNumbers(os.map(_._3))
+        val (iterationDistribution, paperDistribution, actionDistribution) = crunchNumbers(os.withFilter(_._2.nonEmpty).map(_._3))
 
         logger.info(s"Success rate of $successRate. Found a path on $successes out of $totalInstances instances")
         logger.info(s"Iteration distribution: ${prettyPrintMap(iterationDistribution)}")
