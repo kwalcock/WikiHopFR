@@ -11,6 +11,7 @@ import scalax.collection.edge.Implicits._
 import scalax.collection.edge.{LDiEdge, LUnDiEdge}
 import scalax.collection.io.dot._
 
+import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 
 case class KBLabel(relation:Relation)
@@ -98,61 +99,65 @@ abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) extends Laz
   // Entities belonging to a graph
   lazy val entities:Iterable[Set[String]] = graph.nodes map (e => entityHashToText(e.value))
   lazy val edges: collection.Set[VerboseRelation] = graph.edges map (r => relationToVerboseRelation(r.value.relation))
+  protected lazy val pathCache: mutable.Map[(String, String), Iterable[Seq[VerboseRelation]]] = new mutable.HashMap[(String, String), Iterable[Seq[VerboseRelation]]].withDefaultValue(Seq.empty)
 
-  def findPath(source:String, destination:String):Iterable[Seq[VerboseRelation]] = {
-    val sourceCandidates = matchToEntities(source)
-    if(sourceCandidates.isEmpty)
-      throw new NotGroundableElementException(source)
+  def findPath(source:String, destination:String):Iterable[Seq[VerboseRelation]] =
+    pathCache.getOrElseUpdate((source, destination),
+      {
+        val sourceCandidates = matchToEntities(source)
+        if(sourceCandidates.isEmpty)
+          throw new NotGroundableElementException(source)
 
-    val destinationCandidates = matchToEntities(destination)
-    if(destinationCandidates.isEmpty)
-      throw new NotGroundableElementException(destination)
+        val destinationCandidates = matchToEntities(destination)
+        if(destinationCandidates.isEmpty)
+          throw new NotGroundableElementException(destination)
 
-    if(sourceCandidates == destinationCandidates)
-      throw new SameGroundedEndpointsException(source, destination)
+        if(sourceCandidates == destinationCandidates)
+          throw new SameGroundedEndpointsException(source, destination)
 
-    (for{
-      src <- sourceCandidates
-      dst <- destinationCandidates
-    } yield {
+        (for{
+          src <- sourceCandidates
+          dst <- destinationCandidates
+        } yield {
 
-      //val sh = entityLemmaHashes.getOrElse(src, -1)
-      //val dh = entityLemmaHashes.getOrElse(dst, -1)
+          //val sh = entityLemmaHashes.getOrElse(src, -1)
+          //val dh = entityLemmaHashes.getOrElse(dst, -1)
 
-      val sh = groupedEntityHashes.getOrElse(src, -1)
-      val dh = groupedEntityHashes.getOrElse(dst, -1)
+          val sh = groupedEntityHashes.getOrElse(src, -1)
+          val dh = groupedEntityHashes.getOrElse(dst, -1)
 
 
-      if (sh == -1)
-        logger.error(s"$src non-hashable")
-      if (dh == -1)
-        logger.error(s"$dst non-hashable")
+          if (sh == -1)
+            logger.error(s"$src non-hashable")
+          if (dh == -1)
+            logger.error(s"$dst non-hashable")
 
-      if(sh == dh)
-        throw new SameGroundedEndpointsException(source, destination)
+          if(sh == dh)
+            throw new SameGroundedEndpointsException(source, destination)
 
-      Try {
-        val s = graph get sh
-        val d = graph get dh
+          Try {
+            val s = graph get sh
+            val d = graph get dh
 
-        s shortestPathTo d match {
-          case Some(path) =>
-            logger.debug(s"${path.length}")
-            Some(
-              path.edges.map{
-                edge => relationToVerboseRelation(edge.relation)
-              }.toSeq
-            )
-          case None =>
-            logger.debug("No path")
-            None
+            s shortestPathTo d match {
+              case Some(path) =>
+                logger.debug(s"${path.length}")
+                Some(
+                  path.edges.map{
+                    edge => relationToVerboseRelation(edge.relation)
+                  }.toSeq
+                )
+              case None =>
+                logger.debug("No path")
+                None
+            }
+          }
+
+        }) collect {
+          case Success(Some(path)) => path
         }
       }
-
-    }) collect {
-      case Success(Some(path)) => path
-    }
-  }
+    )
 
   protected def relationToVerboseRelation(relation:Relation):VerboseRelation =
     VerboseRelation(

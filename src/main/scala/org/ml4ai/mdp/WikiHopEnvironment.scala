@@ -142,7 +142,6 @@ class WikiHopEnvironment(start:String, end:String, documentUniverse:Option[Set[S
   override def observeState: State = WikiHopState(iterationNum)
 
   override def finishedEpisode: Boolean = {
-    //TODO: Consider quiting if the state didn't change after an action.
     if(iterationNum >= maxIterations)
       true
       else {
@@ -164,7 +163,6 @@ class WikiHopEnvironment(start:String, end:String, documentUniverse:Option[Set[S
       }
   }
 
-  // TODO cache a successful result for performance reasons
   def outcome:Iterable[Seq[VerboseRelation]] = knowledgeGraph match {
     case Some(kg) =>
       Try(kg.findPath(start, end)) match {
