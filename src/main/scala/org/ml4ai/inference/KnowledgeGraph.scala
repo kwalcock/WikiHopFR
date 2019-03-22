@@ -2,6 +2,7 @@ package org.ml4ai.inference
 
 import com.typesafe.scalalogging.LazyLogging
 import org.clulab.processors.{Document, Sentence}
+import org.ml4ai.inference.viz.DotEnabled
 import org.ml4ai.utils.AnnotationsLoader
 import org.ml4ai.utils._
 import org.ml4ai.utils.entityGroundingHash
@@ -9,14 +10,13 @@ import scalax.collection.Graph
 import scalax.collection.edge.LBase.{LEdge, LEdgeImplicits}
 import scalax.collection.edge.Implicits._
 import scalax.collection.edge.{LDiEdge, LUnDiEdge}
-import scalax.collection.io.dot._
 
 import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 
 case class KBLabel(relation:Relation)
 
-abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) extends LazyLogging{
+abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) extends DotEnabled with LazyLogging{
 
 
   protected lazy val groupedEntityHashes: Map[Set[String], Int] = {
@@ -165,38 +165,4 @@ abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) extends Laz
       entityHashToText(relation.destinationHash),
       relation.attributions
     )
-
-  // Dot format viz code
-  private val root = DotRootGraph(directed = true, id = Some(Id("WikiHop Instance")))
-
-  private def edgeTransformer(loader:AnnotationsLoader)(innerEdge: Graph[Int,LUnDiEdge]#EdgeT): Option[(DotGraph,DotEdgeStmt)] =
-    innerEdge.edge match {
-      case LDiEdge(source, target, label) => label match {
-        case KBLabel(r) =>
-          val src = entityLemmaHashes(reversedGroupEntityHashes(r.sourceHash))
-          val dst = entityLemmaHashes(reversedGroupEntityHashes(r.destinationHash))
-
-          val label = r.attributions.map{
-            attr =>
-              Try {
-                val doc = loader.find(attr.document)
-                val sen = doc.sentences(attr.sentenceIx)
-                attr.triple match {
-                  case Some(rel) if rel.relationText(sen) == "" => "*EMPTY*"
-                  case Some(rel) => rel.relationText(sen)
-                  case None => ""
-                }
-              }
-          }.collect{
-            case Success(txt) => txt
-            case Failure(_) => "*ATTRIBUTION ERROR*"
-          }.toSet.mkString(", ")
-
-          Some((root, DotEdgeStmt(NodeId(src), NodeId(dst), List(DotAttr(Id("label"), Id(label))))))
-
-      }
-    }
-
-  def toDot(implicit loader:AnnotationsLoader):String = graph.toDot(dotRoot = root, edgeTransformer=edgeTransformer(loader))
-  //////////////////
 }
