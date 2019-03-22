@@ -59,7 +59,7 @@ class AnnotationsLoader(path:String, cache:Boolean = false){
     else
       false
 
-  def rawSentences:Iterable[String] = raw.values
+  def rawDocuments:Iterable[String] = raw.keys
 
 }
 
