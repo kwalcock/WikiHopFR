@@ -4,12 +4,12 @@ import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
 import org.ml4ai.agents.StatsObserver
 import org.ml4ai.agents.baseline.RandomActionAgent
-import org.ml4ai.utils.WikiHopParser
+import org.ml4ai.utils.{BenchmarkStats, StatsDatum, WikiHopParser}
 
 import concurrent.{Await, ExecutionContext, Future}
-import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success, Try}
+import org.ml4ai.utils.BenchmarkStats.prettyPrintMap
 
 /**
   * Runs an agent over all the training instances of WikiHop and reports results
@@ -19,7 +19,7 @@ object BenchmarkApp extends App with LazyLogging{
   // Read the instances
   val config = ConfigFactory.load()
 
-  val instances = WikiHopParser.trainingInstances//.take(100)
+  val instances = WikiHopParser.trainingInstances.take(100)
   val totalInstances = instances.size
   logger.info(s"About to run FocusedReading on $totalInstances instances")
 
@@ -43,7 +43,7 @@ object BenchmarkApp extends App with LazyLogging{
           Iterable.empty
         }
 
-      val ret = (instance.id, outcome, observer)
+      val ret = StatsDatum(instance.id, outcome, observer)
       logger.info(s"Finished ${instance.id}")
       ret
     }
@@ -54,46 +54,18 @@ object BenchmarkApp extends App with LazyLogging{
   val stats =
     outcomes andThen {
       case Success(os) =>
+        val stats = new BenchmarkStats(os)
 
-        val successes = os count {case (_, paths, _) => paths.nonEmpty}
+        logger.info(s"Success rate of ${stats.successRate}. Found a path on ${stats.numSuccesses} out of $totalInstances instances")
+        logger.info(s"Iteration distribution: ${prettyPrintMap(stats.iterationNumDistribution)}")
+        logger.info(s"Papers distribution: ${prettyPrintMap(stats.papersDistribution)}")
+        logger.info(s"Action distribution: ${prettyPrintMap(stats.actionDistribution)}")
 
-        val successRate = successes / totalInstances.toDouble
-
-        val (iterationDistribution, paperDistribution, actionDistribution) = crunchNumbers(os.withFilter(_._2.nonEmpty).map(_._3))
-
-        logger.info(s"Success rate of $successRate. Found a path on $successes out of $totalInstances instances")
-        logger.info(s"Iteration distribution: ${prettyPrintMap(iterationDistribution)}")
-        logger.info(s"Papers distribution: ${prettyPrintMap(paperDistribution)}")
-        logger.info(s"Action distribution: ${prettyPrintMap(actionDistribution)}")
+        stats.toJson("out.json")
 
       case Failure(exception) =>
         logger.error(exception.toString)
     }
 
   Await.ready(stats, Duration.Inf)
-
-  def crunchNumbers(observers:Iterable[StatsObserver]) = {
-    val iterationNumDistribution = observers.map(_.iterations.get).groupBy(identity).mapValues(_.size)
-    val papersDistribution = observers.map(_.papersRead.get).groupBy(identity).mapValues(_.size)
-    val acc = new mutable.HashMap[String, Int].withDefaultValue(0)
-
-    for(curr <- observers.map(_.actionDistribution)){
-      acc("EXPLORATION") += curr(StatsObserver.EXPLORATION)
-      acc("EXPLORATION_DOUBLE") += curr(StatsObserver.EXPLORATION_DOUBLE)
-      acc("EXPLOITATION") += curr(StatsObserver.EXPLOITATION)
-      acc("RANDOM") += curr(StatsObserver.RANDOM)
-    }
-
-    (iterationNumDistribution, papersDistribution, acc.toMap)
-  }
-
-  def prettyPrintMap[K](m:Map[K, Int]):String = {
-    val buf = new mutable.StringBuilder("\n")
-    val entries = m.toSeq.sortBy{case (k, v) => v}.reverse
-    entries foreach {
-      case (k, v) =>
-        buf.append(s"$k: $v\n")
-    }
-    buf.toString()
-  }
 }

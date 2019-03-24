@@ -1,15 +1,16 @@
-package org.ml4ai.utils
+package org.ml4ai.exec
 
 import java.io.FileWriter
 import java.nio.file.{Files, Paths}
 
-import sys.process._
 import com.typesafe.config.ConfigFactory
-import org.ml4ai.inference.{KnowledgeGraph, OpenIEKnowledgeGraph}
+import org.ml4ai.inference.OpenIEKnowledgeGraph
+import org.ml4ai.utils.{AnnotationsLoader, WikiHopParser, using}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Success
+import sys.process._
 
 object KnowledgeGraphDrawer extends App {
   val config  = ConfigFactory.load()

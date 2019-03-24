@@ -1,13 +1,14 @@
-package org.ml4ai.utils
+package org.ml4ai.exec
 
 import java.io.PrintWriter
 
 import com.typesafe.config.ConfigFactory
 import org.clulab.utils.Serializer
-import org.ml4ai.utils.PathFinder.{NoPaths, Outcome, Successful, Unsuccessful}
-import org.json4s._
+import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.write
+import org.ml4ai.exec.PathFinder.{NoPaths, Outcome, Successful, Unsuccessful}
+import org.ml4ai.utils.{md5Hash, using}
 
 object Results2Json extends App {
 

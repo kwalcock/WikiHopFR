@@ -1,9 +1,10 @@
-package org.ml4ai.utils
+package org.ml4ai.exec
 
 import java.io.{File, PrintWriter}
 
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
+import org.ml4ai.utils.AnnotationsLoader
 import sys.process._
 
 /**

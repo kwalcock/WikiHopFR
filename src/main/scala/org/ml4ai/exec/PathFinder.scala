@@ -1,14 +1,12 @@
-package org.ml4ai.utils
+package org.ml4ai.exec
 
-import java.io.{BufferedOutputStream, PrintWriter, StringWriter}
+import java.io.{PrintWriter, StringWriter}
 
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
-import org.clulab.processors.bionlp.ner.KBEntry
 import org.clulab.utils.Serializer
-import org.ml4ai.inference._
-import scalax.collection.Graph
-import scalax.collection.edge.LUnDiEdge
+import org.ml4ai.inference.{CoocurrenceKnowledgeGraph, NamedEntityLinkKnowledgeGraph, OpenIEKnowledgeGraph, VerboseRelation}
+import org.ml4ai.utils.{AnnotationsLoader, WikiHopParser}
 
 import scala.util.{Failure, Success, Try}
 

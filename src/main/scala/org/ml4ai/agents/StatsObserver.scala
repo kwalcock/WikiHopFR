@@ -12,7 +12,7 @@ import scala.collection.mutable
 class StatsObserver extends AgentObserver {
 
   // State variables
-  val actionDistribution = new mutable.HashMap[Int, Int].withDefaultValue(0)
+  val actionDistribution = new mutable.HashMap[String, Int].withDefaultValue(0)
   var iterations:Option[Int] = None
   var papersRead:Option[Int] = None
 
@@ -55,8 +55,8 @@ class StatsObserver extends AgentObserver {
 
 object StatsObserver {
   // Some Int constants to keep hashing efficient
-  val EXPLORATION = 0
-  val EXPLORATION_DOUBLE = 1
-  val EXPLOITATION = 2
-  val RANDOM = 3
+  val EXPLORATION = "EXPLORATION"
+  val EXPLORATION_DOUBLE = "EXPLORATION_DOUBLE"
+  val EXPLOITATION = "EXPLOITATION"
+  val RANDOM = "RANDOM"
 }

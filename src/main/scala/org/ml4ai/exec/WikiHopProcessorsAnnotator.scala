@@ -1,15 +1,16 @@
-package org.ml4ai.utils
+package org.ml4ai.exec
 
 import java.io.{File, FileWriter, PrintWriter}
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.typesafe.config.{Config, ConfigFactory, ConfigObject}
+import com.typesafe.config.{Config, ConfigFactory}
 import org.clulab.processors.fastnlp.FastNLPProcessor
 import org.clulab.serialization.DocumentSerializer
+import org.ml4ai.utils.{WikiHopParser, md5Hash}
 
 import scala.io.Source
-import scala.util.{Failure, Try}
 import scala.util.matching.Regex.Match
+import scala.util.{Failure, Try}
 
 class WikiHopProcessorsAnnotator(config:Config, documents:Iterable[String]){
 

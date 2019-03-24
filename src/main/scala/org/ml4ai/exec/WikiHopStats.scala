@@ -1,7 +1,8 @@
-package org.ml4ai.utils
+package org.ml4ai.exec
 
 import com.typesafe.config.ConfigFactory
 import org.clulab.processors.RelationTriple
+import org.ml4ai.utils.{AnnotationsLoader, RelationTripleUtils, WikiHopParser, md5Hash}
 
 import scala.util.{Failure, Success, Try}
 
