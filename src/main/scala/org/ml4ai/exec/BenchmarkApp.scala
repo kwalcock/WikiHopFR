@@ -19,7 +19,9 @@ object BenchmarkApp extends App with LazyLogging{
   // Read the instances
   val config = ConfigFactory.load()
 
-  val instances = WikiHopParser.trainingInstances.take(100)
+  val jsonOutputPath = config.getString("files.benchmarkOutput")
+
+  val instances = WikiHopParser.trainingInstances//.take(100)
   val totalInstances = instances.size
   logger.info(s"About to run FocusedReading on $totalInstances instances")
 
@@ -61,7 +63,7 @@ object BenchmarkApp extends App with LazyLogging{
         logger.info(s"Papers distribution: ${prettyPrintMap(stats.papersDistribution)}")
         logger.info(s"Action distribution: ${prettyPrintMap(stats.actionDistribution)}")
 
-        stats.toJson("out.json")
+        stats.toJson(jsonOutputPath)
 
       case Failure(exception) =>
         logger.error(exception.toString)
