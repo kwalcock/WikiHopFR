@@ -37,4 +37,8 @@ object WHConfig {
     val threads: Int = f.getInt("threads")
     val embeddingsFile: String = f.getString("embeddingsFile")
   }
+
+  object Environment {
+    val knowledgeGraphType: String = config.getString("environment.knowledgeGraphType")
+  }
 }

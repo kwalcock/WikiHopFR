@@ -10,16 +10,16 @@ import org.sarsamora.environment.Environment
 import org.sarsamora.states.State
 import org.ml4ai.utils.rng
 
-//import collection.Set
 import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
+import WikiHopEnvironment.buildKnowledgeGraph
 
 class WikiHopEnvironment(start:String, end:String, documentUniverse:Option[Set[String]] = None) extends Environment with LazyLogging {
 
   private implicit val loader:AnnotationsLoader = WikiHopEnvironment.annotationsLoader
 
   // TODO add a factory pattern to change this without recompiling
-  type KG = OpenIEKnowledgeGraph//CoocurrenceKnowledgeGraph
+  //type KG = OpenIEKnowledgeGraph//CoocurrenceKnowledgeGraph
 
   def this(wikiHopKey:String) {
     this(WikiHopEnvironment.getTrainingInstance(wikiHopKey).query.split(" ").last, WikiHopEnvironment.getTrainingInstance(wikiHopKey).answer.get)
@@ -91,7 +91,7 @@ class WikiHopEnvironment(start:String, end:String, documentUniverse:Option[Set[S
     * @param action taken
     * @return
     */
-  private def rewardSignal(action: Action, newState:KG, fetchedPapers:Set[String]):Double = {
+  private def rewardSignal(action: Action, newState:KnowledgeGraph, fetchedPapers:Set[String]):Double = {
     // TODO make the reward function more nuanced
     val newPapers:Int = (fetchedPapers diff papersRead).size
     val newRelations:Int =
@@ -119,7 +119,7 @@ class WikiHopEnvironment(start:String, end:String, documentUniverse:Option[Set[S
     }
     val fetchedDocs = LuceneHelper.retrieveDocumentNames(finalAction, instanceToFilter = documentUniverse)
     // Generate new KG from the documents
-    val kg = new KG(fetchedDocs union papersRead)
+    val kg = buildKnowledgeGraph(fetchedDocs union papersRead)
     val reward = rewardSignal(action, kg, fetchedDocs)
 
     // Update the knowledge graph and keep track of the new papers
@@ -200,4 +200,14 @@ object WikiHopEnvironment extends LazyLogging {
   def getTestingInstance(key:String):WikiHopInstance = getInstance(WikiHopParser.testingInstances, key)
 
   lazy val annotationsLoader = new AnnotationsLoader(WHConfig.Files.annotationsFile, cache = false)
+
+  def buildKnowledgeGraph(docs:Iterable[String])(implicit loader:AnnotationsLoader):KnowledgeGraph = WHConfig.Environment.knowledgeGraphType match {
+
+    case "Coocurrence" => new CoocurrenceKnowledgeGraph(docs)
+    case "OpenIE" => new OpenIEKnowledgeGraph(docs)
+    case "NamedEntityLink" => new NamedEntityLinkKnowledgeGraph(docs)
+    case t =>
+      throw new UnsupportedOperationException(s"Type $t is not a recognized KnowledgeGraph implementation")
+
+  }
 }
