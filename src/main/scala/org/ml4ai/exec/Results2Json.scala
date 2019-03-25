@@ -2,19 +2,17 @@ package org.ml4ai.exec
 
 import java.io.PrintWriter
 
-import com.typesafe.config.ConfigFactory
 import org.clulab.utils.Serializer
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.write
+import org.ml4ai.WHConfig
 import org.ml4ai.exec.PathFinder.{NoPaths, Outcome, Successful, Unsuccessful}
 import org.ml4ai.utils.{md5Hash, using}
 
 object Results2Json extends App {
 
-  val config = ConfigFactory.load()
-
-  val inPath = config.getString("pathFinder.outputFile")
+  val inPath = WHConfig.PathFinder.outputFile
 
   val outPath = inPath.split("\\.").dropRight(1).mkString(".") + ".json"
 

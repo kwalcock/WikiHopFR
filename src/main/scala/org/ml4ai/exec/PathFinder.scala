@@ -2,9 +2,9 @@ package org.ml4ai.exec
 
 import java.io.{PrintWriter, StringWriter}
 
-import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
 import org.clulab.utils.Serializer
+import org.ml4ai.WHConfig
 import org.ml4ai.inference.{CoocurrenceKnowledgeGraph, NamedEntityLinkKnowledgeGraph, OpenIEKnowledgeGraph, VerboseRelation}
 import org.ml4ai.utils.{AnnotationsLoader, WikiHopParser}
 
@@ -20,11 +20,9 @@ object PathFinder extends App with LazyLogging{
 
   case class Unsuccessful(e: Throwable) extends Outcome
 
-  val config = ConfigFactory.load()
-
   val instances = WikiHopParser.trainingInstances
 
-  implicit val loader: AnnotationsLoader = new AnnotationsLoader(config.getString("files.annotationsFile"))
+  implicit val loader: AnnotationsLoader = new AnnotationsLoader(WHConfig.Files.annotationsFile)
 
   // For each of the training instances
   val results =
@@ -32,7 +30,7 @@ object PathFinder extends App with LazyLogging{
 
 
       //val kg = new CoocurrenceKnowledgeGraph(instance.supportDocs)
-      val kg = config.getString("pathFinder.knowledgeGraphType") match {
+      val kg = WHConfig.PathFinder.knowledgeGraphType match {
         case "NamedEntityLink" => new NamedEntityLinkKnowledgeGraph(instance.supportDocs)
         case "Cooccurrence" => new CoocurrenceKnowledgeGraph(instance.supportDocs)
         case "OpenIE" => new OpenIEKnowledgeGraph(instance.supportDocs)
@@ -51,21 +49,6 @@ object PathFinder extends App with LazyLogging{
       }
 
       val ret: Outcome = result match {
-//        case Success(paths) if paths.nonEmpty =>
-//          Successful{
-//            // Keep unique paths only
-//            paths.toSet.map {
-//              path:Seq[Relation] =>
-//                path map {
-//                  relation =>
-//                    VerboseRelation(
-//                      kg.entityHashToText(relation.sourceHash),
-//                      kg.entityHashToText(relation.destinationHash),
-//                      relation.attributions
-//                    )
-//                }
-//            }}
-
         case Success(paths) if paths.nonEmpty => Successful(paths.toSet)
         case Success(_) => NoPaths
         case Failure(exception) => Unsuccessful(exception)
@@ -76,7 +59,7 @@ object PathFinder extends App with LazyLogging{
     }).toMap.seq
 
 
-  Serializer.save(results, config.getString("pathFinder.outputFile"))
+  Serializer.save(results, WHConfig.PathFinder.outputFile)
 
   val x = results.values.count {
     case Successful(_) => true

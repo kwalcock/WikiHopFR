@@ -2,9 +2,11 @@ package org.ml4ai.exec
 
 import java.io.{File, PrintWriter}
 
-import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
+import org.ml4ai.WHConfig
 import org.ml4ai.utils.AnnotationsLoader
+import org.ml4ai.WHConfig.{Embeddings => config}
+
 import sys.process._
 
 /**
@@ -13,15 +15,14 @@ import sys.process._
 object EmbeddingsGeneratorApp extends App with LazyLogging{
 
   // Load settings
-  val config = ConfigFactory.load()
 
-  val annotationsPath = config.getString("files.annotationsFile")
-  val outputPath = config.getString("embeddings.embeddingsFile")
-  val dimensions = config.getInt("embeddings.dimensions")
-  val model = config.getString("embeddings.model")
-  val w2vPath = config.getString("embeddings.binaryPath")
-  val outputInBinaryFormat = config.getBoolean("embeddings.binaryMatrix")
-  val numThreads = config.getInt("embeddings.threads")
+  val annotationsPath = WHConfig.Files.annotationsFile
+  val outputPath = config.embeddingsFile
+  val dimensions = config.dimensions
+  val model = config.model
+  val w2vPath = config.binaryPath
+  val outputInBinaryFormat = config.binaryMatrix
+  val numThreads = config.threads
 
   // Fetch the annotations
   val annotations = new AnnotationsLoader(annotationsPath)

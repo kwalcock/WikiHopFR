@@ -1,8 +1,8 @@
 package org.ml4ai.utils
 
-import com.typesafe.config.ConfigFactory
 import org.clulab.processors.Document
 import org.clulab.serialization.DocumentSerializer
+import org.ml4ai.WHConfig
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -64,8 +64,7 @@ class AnnotationsLoader(path:String, cache:Boolean = false){
 }
 
 object AnnotationsLoader extends App {
-  private val config = ConfigFactory.load()
-  private val annotationsPath = config.getString("files.annotationsFile")
+  private val annotationsPath = WHConfig.Files.annotationsFile
 
   val loader = new AnnotationsLoader(annotationsPath)
 

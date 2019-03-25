@@ -1,15 +1,14 @@
 package org.ml4ai.exec
 
-import com.typesafe.config.ConfigFactory
 import org.clulab.processors.RelationTriple
+import org.ml4ai.WHConfig
 import org.ml4ai.utils.{AnnotationsLoader, RelationTripleUtils, WikiHopParser, md5Hash}
 
 import scala.util.{Failure, Success, Try}
 
 object WikiHopStats extends App {
 
-  val config = ConfigFactory.load()
-  val annotationsPath = config.getString("files.annotationsFile")
+  val annotationsPath = WHConfig.Files.annotationsFile
 
   val trainingInstances = WikiHopParser.testingInstances
   val loader = new AnnotationsLoader(annotationsPath)

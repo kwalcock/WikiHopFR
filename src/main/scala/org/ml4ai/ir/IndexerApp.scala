@@ -2,19 +2,18 @@ package org.ml4ai.ir
 
 import java.io.File
 
-import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
 import org.ml4ai.utils.WikiHopParser
 import org.apache.lucene.index.IndexWriterConfig
 import org.apache.lucene.store.NIOFSDirectory
 import org.apache.lucene.index.IndexWriter
+import org.ml4ai.WHConfig
 import org.ml4ai.ir.LuceneHelper.{addToIndex, analyzer}
 
 
 object IndexerApp extends App with LazyLogging {
 
-  val config = ConfigFactory.load()
-  val indexDir = new File(config.getString("lucene.directoryIndex"))
+  val indexDir = new File(WHConfig.Lucene.directoryIndex)
 
   if(!indexDir.exists()){
     indexDir.mkdirs()

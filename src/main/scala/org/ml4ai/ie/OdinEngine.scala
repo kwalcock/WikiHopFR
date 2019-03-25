@@ -1,8 +1,6 @@
 package org.ml4ai.ie
 
-import com.typesafe.config.ConfigFactory
 import org.clulab.odin._
-import org.ml4ai.utils.AnnotationsLoader
 
 import scala.io.Source
 

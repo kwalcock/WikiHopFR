@@ -1,9 +1,8 @@
 package org.ml4ai.mdp
 
-import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
-import org.ml4ai.WikiHopInstance
-import org.ml4ai.inference.{ActionStarvationException, CoocurrenceKnowledgeGraph, KnowledgeGraph, VerboseRelation}
+import org.ml4ai.{WHConfig, WikiHopInstance}
+import org.ml4ai.inference._
 import org.ml4ai.ir.LuceneHelper
 import org.ml4ai.utils.{AnnotationsLoader, WikiHopParser}
 import org.sarsamora.actions.Action
@@ -20,7 +19,7 @@ class WikiHopEnvironment(start:String, end:String, documentUniverse:Option[Set[S
   private implicit val loader:AnnotationsLoader = WikiHopEnvironment.annotationsLoader
 
   // TODO add a factory pattern to change this without recompiling
-  type KG = CoocurrenceKnowledgeGraph
+  type KG = OpenIEKnowledgeGraph//CoocurrenceKnowledgeGraph
 
   def this(wikiHopKey:String) {
     this(WikiHopEnvironment.getTrainingInstance(wikiHopKey).query.split(" ").last, WikiHopEnvironment.getTrainingInstance(wikiHopKey).answer.get)
@@ -182,7 +181,6 @@ class WikiHopEnvironment(start:String, end:String, documentUniverse:Option[Set[S
 
 object WikiHopEnvironment extends LazyLogging {
 
-  private val config = ConfigFactory.load()
 
   private def getInstance(data:Iterable[WikiHopInstance], key:String):WikiHopInstance =
     Try(data.filter(_.id == key)) match {
@@ -201,5 +199,5 @@ object WikiHopEnvironment extends LazyLogging {
 
   def getTestingInstance(key:String):WikiHopInstance = getInstance(WikiHopParser.testingInstances, key)
 
-  lazy val annotationsLoader = new AnnotationsLoader(config.getString("files.annotationsFile"), cache = false)
+  lazy val annotationsLoader = new AnnotationsLoader(WHConfig.Files.annotationsFile, cache = false)
 }

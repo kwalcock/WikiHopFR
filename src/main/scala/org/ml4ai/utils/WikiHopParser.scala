@@ -1,18 +1,15 @@
 package org.ml4ai.utils
 
-import com.typesafe.config.ConfigFactory
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
-import org.ml4ai.WikiHopInstance
+import org.ml4ai.{WHConfig, WikiHopInstance}
 
 import scala.io.Source
 
 object WikiHopParser{
 
-  private val config = ConfigFactory.load()
-
-  private val trainingPath = config.getString("files.trainingPath")
-  private val testingPath = config.getString("files.testingPath")
+  private val trainingPath = WHConfig.Files.trainingPath
+  private val testingPath = WHConfig.Files.testingPath
 
   private lazy val jsonTrain = using(Source.fromFile(trainingPath)){
     trainStream =>

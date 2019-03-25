@@ -3,7 +3,7 @@ package org.ml4ai.exec
 import java.io.FileWriter
 import java.nio.file.{Files, Paths}
 
-import com.typesafe.config.ConfigFactory
+import org.ml4ai.WHConfig
 import org.ml4ai.inference.OpenIEKnowledgeGraph
 import org.ml4ai.utils.{AnnotationsLoader, WikiHopParser, using}
 
@@ -13,14 +13,13 @@ import scala.util.Success
 import sys.process._
 
 object KnowledgeGraphDrawer extends App {
-  val config  = ConfigFactory.load()
 
   val instances = WikiHopParser.trainingInstances
-  implicit val loader = new AnnotationsLoader(config.getString("files.annotationsFile"))
+  implicit val loader = new AnnotationsLoader(WHConfig.Files.annotationsFile)
   implicit val ec =  ExecutionContext.global
 
   // Check whether the output dir exists
-  val graphDir = config.getString("files.graphvizDir")
+  val graphDir = WHConfig.Files.graphvizDir
 
   val outputDir = Paths.get(graphDir)
 

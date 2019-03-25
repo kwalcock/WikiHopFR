@@ -2,7 +2,6 @@ package org.ml4ai.ir
 
 import java.io.File
 
-import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.index.{DirectoryReader, IndexWriter, Term}
@@ -12,6 +11,7 @@ import org.ml4ai.mdp.{Exploitation, Exploration, ExplorationDouble, RandomAction
 import org.sarsamora.actions.Action
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
 import org.apache.lucene.document.{Document, Field, StringField, TextField}
+import org.ml4ai.WHConfig
 import org.ml4ai.utils.md5Hash
 
 import collection.JavaConverters._
@@ -23,8 +23,7 @@ import scala.collection.mutable
 object LuceneHelper extends LazyLogging {
 
   // State values
-  private val config = ConfigFactory.load()
-  private val indexDir = new File(config.getString("lucene.directoryIndex"))
+  private val indexDir = new File(WHConfig.Lucene.directoryIndex)
   private val index = new NIOFSDirectory(indexDir.toPath)
   private val reader = DirectoryReader.open(index)
   private val searcher = new IndexSearcher(reader)

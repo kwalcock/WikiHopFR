@@ -1,7 +1,7 @@
 package org.ml4ai.exec
 
-import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
+import org.ml4ai.WHConfig
 import org.ml4ai.agents.StatsObserver
 import org.ml4ai.agents.baseline.RandomActionAgent
 import org.ml4ai.utils.{BenchmarkStats, StatsDatum, WikiHopParser}
@@ -17,9 +17,9 @@ import org.ml4ai.utils.BenchmarkStats.prettyPrintMap
 object BenchmarkApp extends App with LazyLogging{
 
   // Read the instances
-  val config = ConfigFactory.load()
+  //val config = ConfigFactory.load()
 
-  val jsonOutputPath = config.getString("files.benchmarkOutput")
+  val jsonOutputPath = WHConfig.Files.benchmarkOutput
 
   val instances = WikiHopParser.trainingInstances//.take(100)
   val totalInstances = instances.size
