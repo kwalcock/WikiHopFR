@@ -39,6 +39,9 @@ object WHConfig {
   }
 
   object Environment {
-    val knowledgeGraphType: String = config.getString("environment.knowledgeGraphType")
+    private val f = config.getConfig("environment")
+
+    val knowledgeGraphType: String = f.getString("knowledgeGraphType")
+    val restrictToLocalDocs: Boolean = f.getBoolean("restrictToLocalDocs")
   }
 }

@@ -1,6 +1,6 @@
 package org.ml4ai.agents
 
-import org.ml4ai.WikiHopInstance
+import org.ml4ai.{WHConfig, WikiHopInstance}
 import org.ml4ai.inference.VerboseRelation
 import org.ml4ai.mdp.WikiHopEnvironment
 import org.sarsamora.actions.Action
@@ -39,7 +39,11 @@ abstract class BaseAgent {
         throw new UnsupportedOperationException("For now, only training instances are supported")
     }
 
-    val documentUniverse = Some(instance.supportDocs.map(md5Hash).toSet)
+    val documentUniverse =
+      if(WHConfig.Environment.restrictToLocalDocs)
+        Some(instance.supportDocs.map(md5Hash).toSet)
+      else
+        None
 
     // Build the environment with the source and destination
     // This is public as the MDP handler needs it
