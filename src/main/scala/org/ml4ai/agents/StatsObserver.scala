@@ -12,7 +12,8 @@ import scala.collection.mutable
 class StatsObserver extends AgentObserver {
 
   // State variables
-  val actionDistribution = new mutable.HashMap[String, Int].withDefaultValue(0)
+  val actionDistribution: mutable.Map[String, Int] = new mutable.HashMap[String, Int].withDefaultValue(0)
+  var errors :List[Throwable] = Nil
   var iterations:Option[Int] = None
   var papersRead:Option[Int] = None
 
@@ -50,6 +51,16 @@ class StatsObserver extends AgentObserver {
   override def endedEpisode(env: WikiHopEnvironment): Unit = {
     iterations = Some(env.iterations)
     papersRead = Some(env.consultedPapers.size)
+  }
+
+  /**
+    * Do something to keep track of the exceptions and throwables for a post-mortem analysis
+    *
+    * @param throwable
+    */
+  override def registerError(throwable: Throwable): Unit = {
+    // Just keep a buffer with the elements and let the analysis do whatever it needs with them offline
+    errors = throwable::errors
   }
 }
 

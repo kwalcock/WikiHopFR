@@ -27,4 +27,10 @@ trait AgentObserver {
     * @param env
     */
   def endedEpisode(env:WikiHopEnvironment):Unit
+
+  /**
+    * Do something to keep track of the exceptions and throwables for a post-mortem analysis
+    * @param throwable
+    */
+  def registerError(throwable: Throwable): Unit
 }

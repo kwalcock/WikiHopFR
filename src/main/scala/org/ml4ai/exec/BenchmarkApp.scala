@@ -33,7 +33,7 @@ object BenchmarkApp extends App with LazyLogging{
 
   // Async programming =)
   val runs =
-    for(instance <- instances) yield Future{
+    for(instance <- instances.take(100)) yield Future{
       logger.info(s"Starting ${instance.id}")
       val observer = new StatsObserver
       // Return the instance id along with the outcomes

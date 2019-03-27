@@ -73,7 +73,14 @@ class BenchmarkStats(data:Iterable[StatsDatum]) {
                     "paths" -> d.paths,
                     "iterations" -> d.observer.iterations.get,
                     "papersRead" -> d.observer.papersRead.get,
-                    "actions" -> d.observer.actionDistribution.toMap
+                    "actions" -> d.observer.actionDistribution.toMap,
+                    "errors" -> (d.observer.errors map {
+                      ex =>
+                        Map(
+                          "type" -> ex.toString,
+                          "message" -> (if (ex.getMessage != null) ex.getMessage else "")
+                        )
+                    })
                   )
               }
             )

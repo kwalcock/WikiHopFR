@@ -18,8 +18,6 @@ class WikiHopEnvironment(start:String, end:String, documentUniverse:Option[Set[S
 
   private implicit val loader:AnnotationsLoader = WikiHopEnvironment.annotationsLoader
 
-  // TODO add a factory pattern to change this without recompiling
-  //type KG = OpenIEKnowledgeGraph//CoocurrenceKnowledgeGraph
 
   def this(wikiHopKey:String) {
     this(WikiHopEnvironment.getTrainingInstance(wikiHopKey).query.split(" ").last, WikiHopEnvironment.getTrainingInstance(wikiHopKey).answer.get)
