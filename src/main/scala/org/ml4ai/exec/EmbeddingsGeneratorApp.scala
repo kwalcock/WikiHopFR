@@ -6,6 +6,7 @@ import com.typesafe.scalalogging.LazyLogging
 import org.ml4ai.WHConfig
 import org.ml4ai.utils.AnnotationsLoader
 import org.ml4ai.WHConfig.{Embeddings => config}
+import scala.language.postfixOps
 
 import sys.process._
 

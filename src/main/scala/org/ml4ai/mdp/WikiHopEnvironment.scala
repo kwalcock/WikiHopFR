@@ -102,11 +102,24 @@ class WikiHopEnvironment(start:String, end:String, documentUniverse:Option[Set[S
         })
       ).size
 
+    // TODO: make this parametrizable
     val livingReward = 0.5
 
     val informationRatio = if(newPapers > 0) newRelations / newPapers else 0
 
-    informationRatio - livingReward
+    val standardReward = informationRatio - livingReward
+
+    val outcomeReward: Double =
+      if(finishedEpisode) {
+        if(outcome.nonEmpty)
+          WHConfig.Environment.successReward
+        else
+          WHConfig.Environment.failureReward
+      }
+      else
+        0
+
+    standardReward + outcomeReward
   }
 
   override def execute(action: Action, persist: Boolean): Double = {
