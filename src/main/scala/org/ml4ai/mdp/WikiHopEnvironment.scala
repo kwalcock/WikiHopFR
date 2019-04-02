@@ -188,6 +188,11 @@ class WikiHopEnvironment(start:String, end:String, documentUniverse:Option[Set[S
   def iterations:Int = iterationNum
   def consultedPapers:Set[String] = papersRead.toSet
 
+  def entityDegrees: Map[Set[String], Int] = knowledgeGraph match {
+    case Some(kg) => kg.degrees
+    case None => Map.empty
+  }
+
 }
 
 object WikiHopEnvironment extends LazyLogging {
