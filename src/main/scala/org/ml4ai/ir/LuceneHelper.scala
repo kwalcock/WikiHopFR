@@ -7,7 +7,7 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.index.{DirectoryReader, IndexWriter, Term}
 import org.apache.lucene.search._
 import org.apache.lucene.store.NIOFSDirectory
-import org.ml4ai.mdp.{Exploitation, Exploration, ExplorationDouble, RandomAction}
+import org.ml4ai.mdp.{Cascade, Exploitation, Exploration, ExplorationDouble, RandomAction}
 import org.sarsamora.actions.Action
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
 import org.apache.lucene.document.{Document, Field, StringField, TextField}
@@ -26,32 +26,46 @@ object LuceneHelper extends LazyLogging {
   private val indexDir = new File(WHConfig.Lucene.directoryIndex)
   private val index = new NIOFSDirectory(indexDir.toPath)
   private val reader = DirectoryReader.open(index)
-  private val searcher = new IndexSearcher(reader)
+  private val defaultSearcher = new IndexSearcher(reader)
   private val maxResults = reader.numDocs // Make the upper bound be the number of documents in the index
 
 
   lazy val analyzer = new StandardAnalyzer()
 
   // Do the actual IR
-  def retrieveDocumentNames(action: Action, instanceToFilter:Option[Set[String]] = None, searcher:IndexSearcher = searcher):Set[String] = {
-    // Build the query
-    val query = actionToQuery(action)
+  def retrieveDocumentNames(action: Action, instanceToFilter:Option[Set[String]] = None, searcher:IndexSearcher = defaultSearcher):Set[String] = {
+    // Handle the cascade action
+    action match {
+      case Cascade(a, b) =>
+        val exploit = Exploitation(a, b)
+        val fetched = retrieveDocumentNames(exploit, instanceToFilter, searcher)
+        if(fetched.nonEmpty)
+          fetched
+        else {
+          val explore = ExplorationDouble(a, b)
+          retrieveDocumentNames(explore, instanceToFilter, searcher)
+        }
 
-    // Execute the query
-    val topDocs = searcher.search(query, maxResults)
+      case _=>
+        // Build the query
+        val query = actionToQuery(action)
 
-    //Generate the result
-    val result =
-      (for(hit <- topDocs.scoreDocs) yield {
-        val doc = searcher.doc(hit.doc, Set("hash").asJava)
-        doc.get("hash")
-      }).toSet
+        // Execute the query
+        val topDocs = searcher.search(query, maxResults)
 
-    instanceToFilter match {
-      case Some(criteria) =>
-        result intersect criteria
-      case None =>
-        result
+        //Generate the result
+        val result =
+          (for(hit <- topDocs.scoreDocs) yield {
+            val doc = searcher.doc(hit.doc, Set("hash").asJava)
+            doc.get("hash")
+          }).toSet
+
+        instanceToFilter match {
+          case Some(criteria) =>
+            result intersect criteria
+          case None =>
+            result
+        }
     }
   }
 

@@ -7,7 +7,7 @@ import org.ml4ai.ir.LuceneHelper
 import LuceneHelper.addToIndex
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.search.IndexSearcher
-import org.ml4ai.mdp.{Exploitation, Exploration, ExplorationDouble}
+import org.ml4ai.mdp.{Cascade, Exploitation, Exploration, ExplorationDouble}
 import org.ml4ai.utils.md5Hash
 
 class TestLuceneUtils extends FlatSpec with Matchers{
@@ -99,6 +99,26 @@ class TestLuceneUtils extends FlatSpec with Matchers{
     val results = LuceneHelper.retrieveDocumentNames(action, searcher = searcher)
 
     results should contain only hash3
+  }
+
+  "The \"Cascade(Enrique, WikiHop)\" action" should "return one" in {
+    val termA = Set("Enrique")
+    val termB = Set("WikiHop")
+
+    val action = Cascade(termA, termB)
+    val results = LuceneHelper.retrieveDocumentNames(action, searcher = searcher)
+
+    results should contain only hash3
+  }
+
+  "The \"Cascade(love it, test)\" action" should "return two" in {
+    val termA = Set("love", "it")
+    val termB = Set("test")
+
+    val action = Cascade(termA, termB)
+    val results = LuceneHelper.retrieveDocumentNames(action, searcher = searcher)
+
+    results should contain allOf (hash2, hash3)
   }
 
 }

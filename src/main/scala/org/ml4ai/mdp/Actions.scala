@@ -22,3 +22,6 @@ case class ExplorationDouble(entityHashA:Set[String], entityHashB:Set[String]) e
 case class Exploitation(entityHashA:Set[String], entityHashB:Set[String]) extends Action
 
 case object RandomAction extends Action
+
+// This class is meant to be use only for the baseline analysis
+case class Cascade(entityHashA:Set[String], entityHashB:Set[String]) extends Action
