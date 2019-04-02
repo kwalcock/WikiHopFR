@@ -14,7 +14,7 @@ import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 import WikiHopEnvironment.buildKnowledgeGraph
 
-class WikiHopEnvironment(start:String, end:String, documentUniverse:Option[Set[String]] = None) extends Environment with LazyLogging {
+class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Option[Set[String]] = None) extends Environment with LazyLogging {
 
   private implicit val loader:AnnotationsLoader = WikiHopEnvironment.annotationsLoader
 

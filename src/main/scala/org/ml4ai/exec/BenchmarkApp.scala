@@ -2,8 +2,8 @@ package org.ml4ai.exec
 
 import com.typesafe.scalalogging.LazyLogging
 import org.ml4ai.WHConfig
-import org.ml4ai.agents.StatsObserver
-import org.ml4ai.agents.baseline.RandomActionAgent
+import org.ml4ai.agents.{BaseAgent, StatsObserver}
+import org.ml4ai.agents.baseline.{CascadeAgent, RandomActionAgent}
 import org.ml4ai.utils.{BenchmarkStats, StatsDatum, WikiHopParser}
 
 import concurrent.{Await, ExecutionContext, Future}
@@ -26,14 +26,14 @@ object BenchmarkApp extends App with LazyLogging{
   logger.info(s"About to run FocusedReading on $totalInstances instances")
 
   // TODO: Make this configurable
-  val agent = new RandomActionAgent
+  val agent = makeAgentFromConfig
   logger.info(s"Agent: $agent")
 
   import ExecutionContext.Implicits.global
 
   // Async programming =)
   val runs =
-    for(instance <- instances.take(100)) yield Future{
+    for(instance <- instances) yield Future{
       logger.info(s"Starting ${instance.id}")
       val observer = new StatsObserver
       // Return the instance id along with the outcomes
@@ -70,4 +70,11 @@ object BenchmarkApp extends App with LazyLogging{
     }
 
   Await.ready(stats, Duration.Inf)
+
+  def makeAgentFromConfig:BaseAgent = {
+    WHConfig.Benchmark.agentType.toLowerCase match {
+      case "random" => new RandomActionAgent
+      case "cascade" => new CascadeAgent
+    }
+  }
 }

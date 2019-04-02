@@ -14,9 +14,12 @@ class CascadeAgent extends DeterministicAgent {
   override protected def selectAction(environment: WikiHopEnvironment): Action = {
     // TODO remember the criteria to select agents in the cascade agent from FR
     val degrees = environment.entityDegrees
-    if(degrees.size > 2) {
+    if(degrees.size >= 2) {
       val selectedEntities = degrees.toSeq.sortBy(_._2).reverse.take(2).map(_._1)
       Cascade(selectedEntities.head, selectedEntities(1))
+    }
+    else if(degrees.isEmpty){
+      Cascade(environment.start.split(" ").toSet, environment.end.split(" ").toSet)
     }
     else
       throw new UnsupportedOperationException("Can't do Cascade action on a KG with less than two entities.")

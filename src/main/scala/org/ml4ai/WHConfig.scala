@@ -46,4 +46,10 @@ object WHConfig {
     val successReward: Double = f.getDouble("successReward")
     val failureReward: Double = f.getDouble("failureReward")
   }
+
+  object Benchmark {
+    private val f = config.getConfig("benchmark")
+
+    val agentType: String = f.getString("agentType")
+  }
 }
