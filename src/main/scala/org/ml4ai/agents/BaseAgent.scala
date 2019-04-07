@@ -4,7 +4,8 @@ import org.ml4ai.{WHConfig, WikiHopInstance}
 import org.ml4ai.inference.VerboseRelation
 import org.ml4ai.mdp.WikiHopEnvironment
 import org.sarsamora.actions.Action
-import org.ml4ai.utils.md5Hash
+import org.ml4ai.utils.{WikiHopParser, md5Hash}
+import org.ml4ai.utils.rng
 
 /**
   * Base class to all of the agent implementations
@@ -42,8 +43,13 @@ abstract class BaseAgent {
     val documentUniverse =
       if(WHConfig.Environment.restrictToLocalDocs)
         Some(instance.supportDocs.map(md5Hash).toSet)
-      else
-        None
+      else {
+        val relevant = instance.supportDocs.map(md5Hash).toSet
+        val irrelevant = rng.shuffle(WikiHopParser.trainingInstances).take(100).flatMap(_.supportDocs.map(md5Hash)).toSet.take(200)
+
+        Some(relevant union irrelevant)
+        //None
+      }
 
     // Build the environment with the source and destination
     // This is public as the MDP handler needs it
