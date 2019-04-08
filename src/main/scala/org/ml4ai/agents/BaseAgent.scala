@@ -5,12 +5,16 @@ import org.ml4ai.inference.VerboseRelation
 import org.ml4ai.mdp.WikiHopEnvironment
 import org.sarsamora.actions.Action
 import org.ml4ai.utils.{WikiHopParser, md5Hash}
-import org.ml4ai.utils.rng
+import org.ml4ai.utils.buildRandom
+
+import scala.util.Random
 
 /**
   * Base class to all of the agent implementations
   */
 abstract class BaseAgent {
+
+  protected lazy val rng:Random = buildRandom()
 
   /**
     * Selects an action from those available from the environment within runEpoch

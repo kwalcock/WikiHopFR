@@ -8,7 +8,7 @@ import org.ml4ai.utils.{AnnotationsLoader, WikiHopParser}
 import org.sarsamora.actions.Action
 import org.sarsamora.environment.Environment
 import org.sarsamora.states.State
-import org.ml4ai.utils.rng
+import org.ml4ai.utils.buildRandom
 
 import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
@@ -33,6 +33,7 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
   private val exploredEntities = new mutable.HashSet[Set[String]]
   private val exploitedEntities = new mutable.HashSet[Set[String]]
   private val papersRead = new mutable.HashSet[String]
+  private val rng = buildRandom()
 
 
 

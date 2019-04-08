@@ -58,6 +58,6 @@ package object utils {
   def filterUselessLemmas(lemmas: Iterable[String]): Iterable[String] = lemmas.map(_.toLowerCase).filter(!stopLemmas.contains(_))
 
   // Set random seed to our global random number generator
-  lazy val rng:Random = new Random(1024)
+  def buildRandom(seed:Int = 1024):Random = new Random(seed)
 
 }

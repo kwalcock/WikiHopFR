@@ -1,5 +1,7 @@
 package org.ml4ai.exec
 
+import java.util.concurrent.Executors
+
 import com.typesafe.scalalogging.LazyLogging
 import org.ml4ai.WHConfig
 import org.ml4ai.agents.{BaseAgent, StatsObserver}
@@ -16,20 +18,18 @@ import org.ml4ai.utils.BenchmarkStats.prettyPrintMap
   */
 object BenchmarkApp extends App with LazyLogging{
 
-  // Read the instances
-  //val config = ConfigFactory.load()
-
   val jsonOutputPath = WHConfig.Files.benchmarkOutput
 
-  val instances = WikiHopParser.trainingInstances
+  val instances = WikiHopParser.trainingInstances.take(100)
   val totalInstances = instances.size
   logger.info(s"About to run FocusedReading on $totalInstances instances")
 
-  // TODO: Make this configurable
   val agent = makeAgentFromConfig
   logger.info(s"Agent: $agent")
 
   import ExecutionContext.Implicits.global
+
+  //implicit val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(2))
 
   // Async programming =)
   val runs =

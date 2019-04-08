@@ -74,8 +74,8 @@ class BenchmarkStats(data:Iterable[StatsDatum]) {
                       "id" -> d.instanceId,
                       "success" -> (if(d.paths.nonEmpty) true else false),
                       "paths" -> d.paths,
-                      "iterations" -> d.observer.iterations.getOrElse(-1),
-                      "papersRead" -> d.observer.papersRead.getOrElse(-1),
+                      "iterations" -> d.observer.iterations.getOrElse(-1), // TODO fix it
+                      "papersRead" -> d.observer.papersRead.getOrElse(-1), // TODO fix it
                       "actions" -> d.observer.actionDistribution.toMap,
                       "errors" -> (d.observer.errors map {
                         ex =>
