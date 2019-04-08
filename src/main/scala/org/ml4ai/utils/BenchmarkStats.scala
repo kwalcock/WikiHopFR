@@ -2,6 +2,7 @@ package org.ml4ai.utils
 
 import java.io.PrintWriter
 
+import akka.actor.Status.Success
 import org.ml4ai.agents.StatsObserver
 import org.ml4ai.inference.VerboseRelation
 import org.json4s.NoTypeHints
@@ -9,6 +10,7 @@ import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.write
 
 import scala.collection.mutable
+import scala.util.{Try, Success}
 
 case class StatsDatum(instanceId:String, paths:Iterable[Seq[VerboseRelation]], observer:StatsObserver)
 
@@ -67,21 +69,23 @@ class BenchmarkStats(data:Iterable[StatsDatum]) {
               ),
               "data" -> data.map{
                 d =>
-                  Map(
-                    "id" -> d.instanceId,
-                    "success" -> (if(d.paths.nonEmpty) true else false),
-                    "paths" -> d.paths,
-                    "iterations" -> d.observer.iterations.get,
-                    "papersRead" -> d.observer.papersRead.get,
-                    "actions" -> d.observer.actionDistribution.toMap,
-                    "errors" -> (d.observer.errors map {
-                      ex =>
-                        Map(
-                          "type" -> ex.toString,
-                          "message" -> (if (ex.getMessage != null) ex.getMessage else "")
-                        )
-                    })
-                  )
+
+                    Map(
+                      "id" -> d.instanceId,
+                      "success" -> (if(d.paths.nonEmpty) true else false),
+                      "paths" -> d.paths,
+                      "iterations" -> d.observer.iterations.getOrElse(-1),
+                      "papersRead" -> d.observer.papersRead.getOrElse(-1),
+                      "actions" -> d.observer.actionDistribution.toMap,
+                      "errors" -> (d.observer.errors map {
+                        ex =>
+                          Map(
+                            "type" -> ex.toString,
+                            "message" -> (if (ex.getMessage != null) ex.getMessage else "")
+                          )
+                      })
+                    )
+
               }
             )
           )
