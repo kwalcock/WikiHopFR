@@ -1,6 +1,5 @@
 package org.ml4ai.exec
 
-import java.util.concurrent.Executors
 
 import com.typesafe.scalalogging.LazyLogging
 import org.ml4ai.WHConfig
@@ -20,7 +19,7 @@ object BenchmarkApp extends App with LazyLogging{
 
   val jsonOutputPath = WHConfig.Files.benchmarkOutput
 
-  val instances = WikiHopParser.trainingInstances.take(100)
+  val instances = WikiHopParser.trainingInstances
   val totalInstances = instances.size
   logger.info(s"About to run FocusedReading on $totalInstances instances")
 

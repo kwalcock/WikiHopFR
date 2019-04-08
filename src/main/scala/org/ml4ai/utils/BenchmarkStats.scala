@@ -2,7 +2,6 @@ package org.ml4ai.utils
 
 import java.io.PrintWriter
 
-import akka.actor.Status.Success
 import org.ml4ai.agents.StatsObserver
 import org.ml4ai.inference.VerboseRelation
 import org.json4s.NoTypeHints
@@ -69,13 +68,13 @@ class BenchmarkStats(data:Iterable[StatsDatum]) {
               ),
               "data" -> data.map{
                 d =>
-
+                  Try {
                     Map(
                       "id" -> d.instanceId,
-                      "success" -> (if(d.paths.nonEmpty) true else false),
+                      "success" -> (if (d.paths.nonEmpty) true else false),
                       "paths" -> d.paths,
-                      "iterations" -> d.observer.iterations.getOrElse(-1), // TODO fix it
-                      "papersRead" -> d.observer.papersRead.getOrElse(-1), // TODO fix it
+                      "iterations" -> d.observer.iterations.get, // TODO fix it
+                      "papersRead" -> d.observer.papersRead.get, // TODO fix it
                       "actions" -> d.observer.actionDistribution.toMap,
                       "errors" -> (d.observer.errors map {
                         ex =>
@@ -85,8 +84,8 @@ class BenchmarkStats(data:Iterable[StatsDatum]) {
                           )
                       })
                     )
-
-              }
+                  }
+              }.collect{ case Success(m) => m }
             )
           )
         )
