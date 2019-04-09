@@ -2,6 +2,7 @@ package org.ml4ai.agents
 
 import org.ml4ai.{WHConfig, WikiHopInstance}
 import org.ml4ai.inference.VerboseRelation
+import org.ml4ai.ir.LuceneHelper
 import org.ml4ai.mdp.WikiHopEnvironment
 import org.sarsamora.actions.Action
 import org.ml4ai.utils.{WikiHopParser, md5Hash}
@@ -44,16 +45,22 @@ abstract class BaseAgent {
         throw new UnsupportedOperationException("For now, only training instances are supported")
     }
 
-    val documentUniverse =
-      if(WHConfig.Environment.restrictToLocalDocs)
-        Some(instance.supportDocs.map(md5Hash).toSet)
-      else {
-        val relevant = instance.supportDocs.map(md5Hash).toSet
-        val irrelevant = rng.shuffle(WikiHopParser.trainingInstances).take(100).flatMap(_.supportDocs.map(md5Hash)).toSet.take(200)
+    val localDocs = instance.supportDocs.map (md5Hash).toSet
 
-        Some(relevant union irrelevant)
-        //None
-      }
+    val documentUniverse = WHConfig.Environment.documentUniverse match {
+      case "Local" =>
+        Some(localDocs)
+      case "Random" =>
+        val randomDocs = rng.shuffle(WikiHopParser.trainingInstances).take(100).flatMap(_.supportDocs.map (md5Hash) ).toSet.take (200)
+        Some(localDocs union randomDocs)
+
+      case "Related" =>
+        val relatedDocs = LuceneHelper.getLexicallySimilarDocuments(source.split(" ").toSet, destination.split(" ").toSet)
+        Some(localDocs union relatedDocs.take(200).toSet)
+      case unsupported =>
+        throw new UnsupportedOperationException(s"Document universe of $unsupported kind is not supported")
+
+    }
 
     // Build the environment with the source and destination
     // This is public as the MDP handler needs it

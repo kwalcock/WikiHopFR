@@ -32,6 +32,27 @@ object LuceneHelper extends LazyLogging {
 
   lazy val analyzer = new StandardAnalyzer()
 
+  /**
+    * Returns the documents that contain any of the terms but not necessarily related to the query term
+    * @param entityA Terms of the start of the search
+    * @param entityB Terms of the end of the search
+    * @param searcher Instance of lucene searcher (the index)
+    * @return
+    */
+  def getLexicallySimilarDocuments(entityA:Set[String], entityB:Set[String], searcher:IndexSearcher = defaultSearcher):Seq[String] = {
+    val allTerms = entityA union entityB
+    val query = entityTermsDisjunction(allTerms)
+
+    // Execute the query
+    val topDocs = searcher.search(query, maxResults)
+
+    //Generate the result in descending order by their TF-IDF score
+    for(hit <- topDocs.scoreDocs.sortBy(_.score).reverse) yield {
+      val doc = searcher.doc(hit.doc, Set("hash").asJava)
+      doc.get("hash")
+    }
+  }
+
   // Do the actual IR
   def retrieveDocumentNames(action: Action, instanceToFilter:Option[Set[String]] = None, searcher:IndexSearcher = defaultSearcher):Set[String] = {
     // Handle the cascade action
@@ -75,10 +96,10 @@ object LuceneHelper extends LazyLogging {
     * @return Lucene query characterized by action
     */
   private def actionToQuery(action: Action):Query = action match {
-    case Exploration(a) => entityTermsDisjunction(a)
+    case Exploration(a) => entityTermsConjunction(a)
     case ExplorationDouble(a, b) =>
-      val queryA = entityTermsDisjunction(a)
-      val queryB = entityTermsDisjunction(b)
+      val queryA = entityTermsConjunction(a)
+      val queryB = entityTermsConjunction(b)
 
       val builder = new BooleanQuery.Builder
       builder.add(new BooleanClause(queryA, BooleanClause.Occur.SHOULD))
@@ -86,8 +107,8 @@ object LuceneHelper extends LazyLogging {
 
       builder.build()
     case Exploitation(a, b) =>
-      val queryA = entityTermsDisjunction(a)
-      val queryB = entityTermsDisjunction(b)
+      val queryA = entityTermsConjunction(a)
+      val queryB = entityTermsConjunction(b)
 
       val builder = new BooleanQuery.Builder
       builder.add(new BooleanClause(queryA, BooleanClause.Occur.MUST))
@@ -100,8 +121,7 @@ object LuceneHelper extends LazyLogging {
   }
 
 
-  private def entityTermsDisjunction(entityTerms:Set[String]):BooleanQuery = {
-
+  private def entityTermsBooleanClause(entityTerms:Set[String], clause:BooleanClause.Occur):BooleanQuery = {
     val analyzedTerms = analyzeTerms(entityTerms)
     val termQueries = analyzedTerms map (t => new TermQuery(new Term("contents", t)))
 
@@ -109,11 +129,18 @@ object LuceneHelper extends LazyLogging {
 
     termQueries foreach {
       term =>
-        queryBuilder.add(term, BooleanClause.Occur.MUST)
+        queryBuilder.add(term, clause)
     }
 
     queryBuilder.build()
   }
+
+
+  private def entityTermsConjunction(entityTerms:Set[String]):BooleanQuery =
+    entityTermsBooleanClause(entityTerms, BooleanClause.Occur.MUST)
+
+  private def entityTermsDisjunction(entityTerms:Set[String]):BooleanQuery =
+    entityTermsBooleanClause(entityTerms, BooleanClause.Occur.SHOULD)
 
 
   // Taken from https://lucene.apache.org/core/7_2_1/core/org/apache/lucene/analysis/package-summary.html

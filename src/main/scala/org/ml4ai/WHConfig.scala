@@ -42,7 +42,7 @@ object WHConfig {
     private val f = config.getConfig("environment")
 
     val knowledgeGraphType: String = f.getString("knowledgeGraphType")
-    val restrictToLocalDocs: Boolean = f.getBoolean("restrictToLocalDocs")
+    val documentUniverse: String = f.getString("documentUniverse")
     val successReward: Double = f.getDouble("successReward")
     val failureReward: Double = f.getDouble("failureReward")
   }
