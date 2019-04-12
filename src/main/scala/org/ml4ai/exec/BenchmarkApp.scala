@@ -19,7 +19,11 @@ object BenchmarkApp extends App with LazyLogging{
 
   val jsonOutputPath = buildOutputFileName(WHConfig.Files.benchmarkOutput)
 
-  val allInstances = WikiHopParser.trainingInstances.take(10)
+  // Take the number of instances
+  val allInstances = WHConfig.Benchmark.numInstances match {
+    case Some(bound) => WikiHopParser.trainingInstances.take(bound)
+    case None => WikiHopParser.trainingInstances
+  }
 
   val instances = instancesSlice(allInstances)
   val totalInstances = instances.size

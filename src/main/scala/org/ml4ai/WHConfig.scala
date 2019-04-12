@@ -63,5 +63,7 @@ object WHConfig {
       case Success(wi) => Some(wi)
       case Failure(_) => None
     }
+
+    val numInstances:Option[Int] = Try(f.getInt("numInstances")).toOption
   }
 }
