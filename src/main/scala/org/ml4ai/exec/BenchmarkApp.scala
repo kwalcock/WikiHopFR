@@ -2,7 +2,7 @@ package org.ml4ai.exec
 
 
 import com.typesafe.scalalogging.LazyLogging
-import org.ml4ai.WHConfig
+import org.ml4ai.{WHConfig, WikiHopInstance}
 import org.ml4ai.agents.{BaseAgent, StatsObserver}
 import org.ml4ai.agents.baseline.{CascadeAgent, RandomActionAgent}
 import org.ml4ai.utils.{BenchmarkStats, StatsDatum, WikiHopParser}
@@ -17,9 +17,11 @@ import org.ml4ai.utils.BenchmarkStats.prettyPrintMap
   */
 object BenchmarkApp extends App with LazyLogging{
 
-  val jsonOutputPath = WHConfig.Files.benchmarkOutput
+  val jsonOutputPath = buildOutputFileName(WHConfig.Files.benchmarkOutput)
 
-  val instances = WikiHopParser.trainingInstances
+  val allInstances = WikiHopParser.trainingInstances.take(10)
+
+  val instances = instancesSlice(allInstances)
   val totalInstances = instances.size
   logger.info(s"About to run FocusedReading on $totalInstances instances")
 
@@ -74,6 +76,39 @@ object BenchmarkApp extends App with LazyLogging{
     WHConfig.Benchmark.agentType.toLowerCase match {
       case "random" => new RandomActionAgent
       case "cascade" => new CascadeAgent
+    }
+  }
+
+  def instancesSlice(allInstances: Seq[WikiHopInstance]) = {
+    import WHConfig.Benchmark._
+
+    (totalWorkers, workerIndex) match {
+      case (Some(tw), Some(wi)) if tw > 0 && wi >= 0 && wi < tw  =>
+        // Compute the size of the slices
+        val sliceSize = allInstances.size / tw
+        val lastWorkerIx = tw - 1
+        if(wi < lastWorkerIx){
+          val start = sliceSize*wi
+          val end = start + sliceSize
+          allInstances.slice(start, end)
+        }
+        else {
+          val numToDrop = sliceSize*(tw - 1)
+          allInstances.drop(numToDrop)
+        }
+      case (Some(tw), Some(wi)) =>
+        throw new UnsupportedOperationException(s"The worker configuration is not correct. Total workers: $tw\tWorker index: $wi")
+      case (None, None) =>
+        allInstances
+      case _ =>
+        throw new UnsupportedOperationException(s"The worker configuration is not correct.")
+    }
+  }
+
+  def buildOutputFileName(benchmarkOutput: String) = {
+    WHConfig.Benchmark.workerIndex match {
+      case Some(ix) => s"$benchmarkOutput.$ix"
+      case None => benchmarkOutput
     }
   }
 }

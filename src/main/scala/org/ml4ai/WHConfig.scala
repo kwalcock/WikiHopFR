@@ -2,6 +2,8 @@ package org.ml4ai
 
 import com.typesafe.config.ConfigFactory
 
+import scala.util.{Failure, Success, Try}
+
 object WHConfig {
   private val config = ConfigFactory.load
 
@@ -51,5 +53,15 @@ object WHConfig {
     private val f = config.getConfig("benchmark")
 
     val agentType: String = f.getString("agentType")
+
+    val totalWorkers:Option[Int] = Try(f.getInt("totalWorkers")) match {
+      case Success(tw) => Some(tw)
+      case Failure(_) => None
+    }
+
+    val workerIndex:Option[Int] = Try(f.getInt("workerIndex")) match {
+      case Success(wi) => Some(wi)
+      case Failure(_) => None
+    }
   }
 }
