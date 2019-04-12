@@ -23,9 +23,16 @@ do
             fi
 
             OUTPUT_PATH="$OUTPUT_DIR/$FILE_NAME"
+            PARAMS="-Dconfig.file=${CONF_FILE} -Denvironment.knowledgeGraphType=${KG} -Denvironment.documentUniverse=${DOC_UNIVERSE} -Dbenchmark.agentType=${AGENT} -Dfiles.benchmarkOutput=${OUTPUT_PATH}"
 
-            CMD="sbt -Dconfig.file=${CONF_FILE} -Denvironment.knowledgeGraphType=${KG} -Denvironment.documentUniverse=${DOC_UNIVERSE} -Dbenchmark.agentType=${AGENT} -Dfiles.benchmarkOutput=${OUTPUT_PATH} \"runMain org.ml4ai.exec.BenchmarkApp\""
-            eval $CMD
+            if [ ! -z $NUM_WORKERS ] && [ ! -z $WORKER_IX ]
+            then
+                PARAMS="${PARAMS} -Dbenchmark.totalWorkers=${NUM_WORKERS} -Dbenchmark.workerIndex=${WORKER_IX}"
+            fi
+
+
+            CMD="sbt $PARAMS \"runMain org.ml4ai.exec.BenchmarkApp\""
+            echo $CMD
 
         done
     done
