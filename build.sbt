@@ -1,4 +1,5 @@
 import Dependencies._
+import sbtassembly.AssemblyPlugin.autoImport.MergeStrategy
 
 lazy val scala212 = "2.12.8"
 lazy val scala211 = "2.11.12"
@@ -31,5 +32,5 @@ lazy val root = (project in file(".")).
       "org.scala-graph" %% "graph-dot" % "1.12.1",
       "org.clulab" %% "sarsamora" % "0.2.0-SNAPSHOT",
       scalaTest % Test
-    )
+    ),
   )
