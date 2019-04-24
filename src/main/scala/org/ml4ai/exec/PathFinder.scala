@@ -6,7 +6,7 @@ import com.typesafe.scalalogging.LazyLogging
 import org.clulab.utils.Serializer
 import org.ml4ai.WHConfig
 import org.ml4ai.inference.{CoocurrenceKnowledgeGraph, NamedEntityLinkKnowledgeGraph, OpenIEKnowledgeGraph, VerboseRelation}
-import org.ml4ai.utils.{AnnotationsLoader, WikiHopParser}
+import org.ml4ai.utils.{AnnotationsLoader, SupportDocs, WikiHopParser}
 
 import scala.util.{Failure, Success, Try}
 
@@ -28,12 +28,23 @@ object PathFinder extends App with LazyLogging{
   val results =
     (for (instance <- instances.par) yield {
 
+      val documentUniverse = WHConfig.Environment.documentUniverse match {
+        case "Local" =>
+          SupportDocs.localDocs(instance)
+        case "Random" =>
+          SupportDocs.randomDocs(instance)
+
+        case "Related" =>
+          SupportDocs.relatedDocs(instance)
+        case unsupported =>
+          throw new UnsupportedOperationException(s"Document universe of $unsupported kind is not supported")
+      }
 
       //val kg = new CoocurrenceKnowledgeGraph(instance.supportDocs)
       val kg = WHConfig.PathFinder.knowledgeGraphType match {
-        case "NamedEntityLink" => new NamedEntityLinkKnowledgeGraph(instance.supportDocs)
-        case "Cooccurrence" => new CoocurrenceKnowledgeGraph(instance.supportDocs)
-        case "OpenIE" => new OpenIEKnowledgeGraph(instance.supportDocs)
+        case "NamedEntityLink" => new NamedEntityLinkKnowledgeGraph(documentUniverse)
+        case "Cooccurrence" => new CoocurrenceKnowledgeGraph(documentUniverse)
+        case "OpenIE" => new OpenIEKnowledgeGraph(documentUniverse)
         case unknown => throw new UnsupportedOperationException(s"KnowledgeGraph type not implemented: $unknown")
       }
       val source = instance.query.split(" ").drop(1).mkString(" ")

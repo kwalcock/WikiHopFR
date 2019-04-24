@@ -5,8 +5,7 @@ import org.ml4ai.inference.VerboseRelation
 import org.ml4ai.ir.LuceneHelper
 import org.ml4ai.mdp.WikiHopEnvironment
 import org.sarsamora.actions.Action
-import org.ml4ai.utils.{WikiHopParser, md5Hash}
-import org.ml4ai.utils.buildRandom
+import org.ml4ai.utils.{SupportDocs, WikiHopParser, buildRandom, md5Hash}
 
 import scala.util.Random
 
@@ -49,14 +48,16 @@ abstract class BaseAgent {
 
     val documentUniverse = WHConfig.Environment.documentUniverse match {
       case "Local" =>
-        Some(localDocs)
+        Some(SupportDocs.localDocs(instance))
       case "Random" =>
-        val randomDocs = rng.shuffle(WikiHopParser.trainingInstances).take(100).flatMap(_.supportDocs.map (md5Hash) ).toSet.take (200)
-        Some(localDocs union randomDocs)
+//        val randomDocs = rng.shuffle(WikiHopParser.trainingInstances).take(100).flatMap(_.supportDocs.map (md5Hash) ).toSet.take (200)
+//        Some(localDocs union randomDocs)
+        Some(SupportDocs.randomDocs(instance))
 
       case "Related" =>
-        val relatedDocs = LuceneHelper.getLexicallySimilarDocuments(source.split(" ").toSet, destination.split(" ").toSet)
-        Some(localDocs union relatedDocs.take(200).toSet)
+//        val relatedDocs = LuceneHelper.getLexicallySimilarDocuments(source.split(" ").toSet, destination.split(" ").toSet)
+//        Some(localDocs union relatedDocs.take(200).toSet)
+        Some(SupportDocs.relatedDocs(instance))
       case unsupported =>
         throw new UnsupportedOperationException(s"Document universe of $unsupported kind is not supported")
 
