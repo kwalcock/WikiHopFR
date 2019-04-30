@@ -2,6 +2,7 @@ package org.ml4ai.exec
 
 
 import com.typesafe.scalalogging.LazyLogging
+import org.clulab.utils.Serializer
 import org.ml4ai.{WHConfig, WikiHopInstance}
 import org.ml4ai.agents.{BaseAgent, StatsObserver}
 import org.ml4ai.agents.baseline.{CascadeAgent, RandomActionAgent}
@@ -67,7 +68,9 @@ object BenchmarkApp extends App with LazyLogging{
         logger.info(s"Iteration distribution: ${prettyPrintMap(stats.iterationNumDistribution)}")
         logger.info(s"Papers distribution: ${prettyPrintMap(stats.papersDistribution)}")
         logger.info(s"Action distribution: ${prettyPrintMap(stats.actionDistribution)}")
+        logger.info(s"Concrete action distribution: ${prettyPrintMap(stats.concreteActionDist)}")
 
+        Serializer.save(stats, s"$jsonOutputPath.ser")
         stats.toJson(jsonOutputPath)
 
       case Failure(exception) =>

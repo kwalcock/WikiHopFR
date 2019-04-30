@@ -121,15 +121,34 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
     standardReward + outcomeReward
   }
 
+  /**
+    * Contains the last action executed by the environment after processing a "Meta-Action"
+    * For example, If the random action was chosen, which concrete action was sampled?
+    */
+  var lastConcreteAction:Option[Action] = None
+
   override def execute(action: Action, persist: Boolean): Double = {
     // Increment the iteration counter
     iterationNum += 1
     // If the random action is selected, transform it to a concrete action randomly
-    val finalAction = action match {
-      case RandomAction => selectActionRandomly
-      case a:Action => a
+    val (finalAction, fetchedDocs) = action match {
+      case Cascade(e1, e2) =>
+        val exploitation = Exploitation(e1, e2)
+        val fetched = LuceneHelper.retrieveDocumentNames(exploitation, instanceToFilter= documentUniverse)
+        if(fetched.nonEmpty)
+          (exploitation, fetched)
+        else {
+          val explore = ExplorationDouble(e1, e2)
+          (explore, LuceneHelper.retrieveDocumentNames(explore, instanceToFilter= documentUniverse))
+        }
+      case RandomAction =>
+        val f = selectActionRandomly
+        (f, LuceneHelper.retrieveDocumentNames(f, instanceToFilter = documentUniverse))
+      case a:Action =>
+        (a, LuceneHelper.retrieveDocumentNames(a, instanceToFilter = documentUniverse))
     }
-    val fetchedDocs = LuceneHelper.retrieveDocumentNames(finalAction, instanceToFilter = documentUniverse)
+
+    lastConcreteAction = Some(finalAction)
     // Generate new KG from the documents
     val kg = buildKnowledgeGraph(fetchedDocs union papersRead)
     val reward = rewardSignal(action, kg, fetchedDocs)

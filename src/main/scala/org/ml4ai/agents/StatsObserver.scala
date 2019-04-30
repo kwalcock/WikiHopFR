@@ -13,6 +13,7 @@ class StatsObserver extends AgentObserver {
 
   // State variables
   val actionDistribution: mutable.Map[String, Int] = new mutable.HashMap[String, Int].withDefaultValue(0)
+  val concreteActionDistribution: mutable.Map[String, Int] = new mutable.HashMap[String, Int].withDefaultValue(0)
   var errors :List[Throwable] = Nil
   var iterations:Option[Int] = None
   var papersRead:Option[Int] = None
@@ -38,7 +39,27 @@ class StatsObserver extends AgentObserver {
       case _:Exploration => actionDistribution(EXPLORATION) += 1
       case _:ExplorationDouble => actionDistribution(EXPLORATION_DOUBLE) += 1
       case _:Exploitation => actionDistribution(EXPLOITATION) += 1
+      case _:Cascade => actionDistribution(CASCADE) += 1
       case RandomAction => actionDistribution(RANDOM) += 1
+      case _ => ()
+    }
+  }
+
+  /**
+    * Similar to action taken, but returns a concrete action. I.e. Instead of Random Action,
+    * returns the sampled action.
+    *
+    * @param action
+    * @param reward
+    * @param env
+    */
+  override def concreteActionTaken(action: Action, reward: Double, env: WikiHopEnvironment): Unit = {
+    import StatsObserver._
+    // Increment action counters
+    action match {
+      case _:Exploration => concreteActionDistribution(EXPLORATION) += 1
+      case _:ExplorationDouble => concreteActionDistribution(EXPLORATION_DOUBLE) += 1
+      case _:Exploitation => concreteActionDistribution(EXPLOITATION) += 1
       case _ => ()
     }
   }
@@ -62,6 +83,8 @@ class StatsObserver extends AgentObserver {
     // Just keep a buffer with the elements and let the analysis do whatever it needs with them offline
     errors = throwable::errors
   }
+
+
 }
 
 object StatsObserver {
@@ -70,4 +93,5 @@ object StatsObserver {
   val EXPLORATION_DOUBLE = "EXPLORATION_DOUBLE"
   val EXPLOITATION = "EXPLOITATION"
   val RANDOM = "RANDOM"
+  val CASCADE = "CASCADE"
 }

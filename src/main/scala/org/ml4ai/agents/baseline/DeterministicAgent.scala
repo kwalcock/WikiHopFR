@@ -31,8 +31,11 @@ abstract class DeterministicAgent extends BaseAgent{
           // Execute it
           val reward = environment.execute(action)
           // Log it to the monitor
-          for (m <- monitor)
+          for (m <- monitor) {
             m.actionTaken(action, reward, environment)
+            m.concreteActionTaken(environment.lastConcreteAction.get, reward, environment)
+          }
+
           // Tail recursion
           runEpisode(environment, monitor)
         }

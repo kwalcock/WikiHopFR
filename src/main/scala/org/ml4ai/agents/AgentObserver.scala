@@ -15,12 +15,21 @@ trait AgentObserver {
   def startedEpisode(env:WikiHopEnvironment):Unit
 
   /**
-    * Called it after executing an action and observing the reward
+    * Called after executing an action and observing the reward
     * @param action
     * @param reward
     * @param env
     */
   def actionTaken(action:Action, reward:Double, env:WikiHopEnvironment):Unit
+
+  /**
+    * Similar to action taken, but returns a concrete action. I.e. Instead of Random Action,
+    * returns the sampled action.
+    * @param action
+    * @param reward
+    * @param env
+    */
+  def concreteActionTaken(action:Action, reward:Double, env:WikiHopEnvironment):Unit
 
   /**
     * Called once after finishing the episode finishes

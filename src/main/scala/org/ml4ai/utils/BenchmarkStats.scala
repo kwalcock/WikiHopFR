@@ -35,18 +35,26 @@ class BenchmarkStats(data:Iterable[StatsDatum]) {
     val iterationNumDistribution = observers.map(_.iterations.get).groupBy(identity).mapValues(_.size)
     val papersDistribution = observers.map(_.papersRead.get).groupBy(identity).mapValues(_.size)
     val acc = new mutable.HashMap[String, Int].withDefaultValue(0)
+    val concAcc = new mutable.HashMap[String, Int].withDefaultValue(0)
 
     for(curr <- observers.map(_.actionDistribution)){
       acc("EXPLORATION") += curr(StatsObserver.EXPLORATION)
       acc("EXPLORATION_DOUBLE") += curr(StatsObserver.EXPLORATION_DOUBLE)
       acc("EXPLOITATION") += curr(StatsObserver.EXPLOITATION)
       acc("RANDOM") += curr(StatsObserver.RANDOM)
+      acc("CASCADE") += curr(StatsObserver.CASCADE)
     }
 
-    (iterationNumDistribution, papersDistribution, acc.toMap)
+    for(curr <- observers.map(_.concreteActionDistribution)){
+      concAcc("EXPLORATION") += curr(StatsObserver.EXPLORATION)
+      concAcc("EXPLORATION_DOUBLE") += curr(StatsObserver.EXPLORATION_DOUBLE)
+      concAcc("EXPLOITATION") += curr(StatsObserver.EXPLOITATION)
+    }
+
+    (iterationNumDistribution, papersDistribution, acc.toMap, concAcc.toMap)
   }
 
-  lazy val (iterationNumDistribution, papersDistribution, actionDistribution) =
+  lazy val (iterationNumDistribution, papersDistribution, actionDistribution, concreteActionDist) =
     crunchNumbers(successes map (_.observer))
 
   def toJson(path:String) {
@@ -64,7 +72,8 @@ class BenchmarkStats(data:Iterable[StatsDatum]) {
               "stats" -> Map(
                 "iterationsDist" -> iterationNumDistribution,
                 "papersDist" -> papersDistribution,
-                "actionDist" -> actionDistribution
+                "actionDist" -> actionDistribution,
+                "concreteActionDist" -> concreteActionDist
               ),
               "data" -> data.map{
                 d =>

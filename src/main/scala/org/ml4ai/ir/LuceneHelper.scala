@@ -56,18 +56,18 @@ object LuceneHelper extends LazyLogging {
   // Do the actual IR
   def retrieveDocumentNames(action: Action, instanceToFilter:Option[Set[String]] = None, searcher:IndexSearcher = defaultSearcher):Set[String] = {
     // Handle the cascade action
-    action match {
-      case Cascade(a, b) =>
-        val exploit = Exploitation(a, b)
-        val fetched = retrieveDocumentNames(exploit, instanceToFilter, searcher)
-        if(fetched.nonEmpty)
-          fetched
-        else {
-          val explore = ExplorationDouble(a, b)
-          retrieveDocumentNames(explore, instanceToFilter, searcher)
-        }
-
-      case _=>
+//    action match {
+//      case Cascade(a, b) =>
+//        val exploit = Exploitation(a, b)
+//        val fetched = retrieveDocumentNames(exploit, instanceToFilter, searcher)
+//        if(fetched.nonEmpty)
+//          fetched
+//        else {
+//          val explore = ExplorationDouble(a, b)
+//          retrieveDocumentNames(explore, instanceToFilter, searcher)
+//        }
+//
+//      case _=>
         // Build the query
         val query = actionToQuery(action)
 
@@ -87,7 +87,7 @@ object LuceneHelper extends LazyLogging {
           case None =>
             result
         }
-    }
+//    }
   }
 
   /**
@@ -118,6 +118,9 @@ object LuceneHelper extends LazyLogging {
     case RandomAction =>
       logger.error("Can't build a query for the RandomAction. Should have been dealt with before this point")
       throw new UnsupportedOperationException("No lucene functionality for a random query")
+    case _:Cascade =>
+      logger.error("Can't build a query for the Cascade action. Should have been dealt with before this point")
+      throw new UnsupportedOperationException("No lucene functionality for a cascade query")
   }
 
 
