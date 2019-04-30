@@ -70,7 +70,7 @@ object BenchmarkApp extends App with LazyLogging{
         logger.info(s"Action distribution: ${prettyPrintMap(stats.actionDistribution)}")
         logger.info(s"Concrete action distribution: ${prettyPrintMap(stats.concreteActionDist)}")
 
-        Serializer.save(stats, s"$jsonOutputPath.ser")
+        //Serializer.save(stats, s"$jsonOutputPath.ser")
         stats.toJson(jsonOutputPath)
 
       case Failure(exception) =>

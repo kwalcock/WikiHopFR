@@ -126,6 +126,7 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
     * For example, If the random action was chosen, which concrete action was sampled?
     */
   var lastConcreteAction:Option[Action] = None
+  var numDocumentsAdded:Int = 0
 
   override def execute(action: Action, persist: Boolean): Double = {
     // Increment the iteration counter
@@ -150,8 +151,12 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
 
     lastConcreteAction = Some(finalAction)
     // Generate new KG from the documents
-    val kg = buildKnowledgeGraph(fetchedDocs union papersRead)
+    val expandedDocuments = fetchedDocs union papersRead
+    val kg = buildKnowledgeGraph(expandedDocuments)
     val reward = rewardSignal(action, kg, fetchedDocs)
+
+    // Keep track of how many documents were added
+    numDocumentsAdded = (fetchedDocs diff papersRead).size
 
     // Update the knowledge graph and keep track of the new papers
     knowledgeGraph = Some(kg)

@@ -14,6 +14,7 @@ class StatsObserver extends AgentObserver {
   // State variables
   val actionDistribution: mutable.Map[String, Int] = new mutable.HashMap[String, Int].withDefaultValue(0)
   val concreteActionDistribution: mutable.Map[String, Int] = new mutable.HashMap[String, Int].withDefaultValue(0)
+  val documentsContribution: mutable.Map[String, Int] = new mutable.HashMap[String, Int].withDefaultValue(0)
   var errors :List[Throwable] = Nil
   var iterations:Option[Int] = None
   var papersRead:Option[Int] = None
@@ -32,7 +33,7 @@ class StatsObserver extends AgentObserver {
     * @param reward
     * @param env
     */
-  override def actionTaken(action: Action, reward: Double, env: WikiHopEnvironment): Unit = {
+  override def actionTaken(action: Action, reward: Double, numDocsAdded:Int, env: WikiHopEnvironment): Unit = {
     import StatsObserver._
     // Increment action counters
     action match {
@@ -53,13 +54,19 @@ class StatsObserver extends AgentObserver {
     * @param reward
     * @param env
     */
-  override def concreteActionTaken(action: Action, reward: Double, env: WikiHopEnvironment): Unit = {
+  override def concreteActionTaken(action: Action, reward: Double, numDocsAdded:Int, env: WikiHopEnvironment): Unit = {
     import StatsObserver._
     // Increment action counters
     action match {
-      case _:Exploration => concreteActionDistribution(EXPLORATION) += 1
-      case _:ExplorationDouble => concreteActionDistribution(EXPLORATION_DOUBLE) += 1
-      case _:Exploitation => concreteActionDistribution(EXPLOITATION) += 1
+      case _:Exploration =>
+        concreteActionDistribution(EXPLORATION) += 1
+        documentsContribution(EXPLORATION) += numDocsAdded
+      case _:ExplorationDouble =>
+        concreteActionDistribution(EXPLORATION_DOUBLE) += 1
+        documentsContribution(EXPLORATION_DOUBLE) += numDocsAdded
+      case _:Exploitation =>
+        concreteActionDistribution(EXPLOITATION) += 1
+        documentsContribution(EXPLOITATION) += numDocsAdded
       case _ => ()
     }
   }
