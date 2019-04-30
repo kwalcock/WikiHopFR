@@ -6,4 +6,4 @@ case class Relation(sourceHash:Int,
 
 case class VerboseRelation(source:Iterable[String],
                            destination:Iterable[String],
-                           attributions:Iterable[AttributingElement])
+                           attributions:Iterable[AttributingElement]) extends Serializable

@@ -11,14 +11,14 @@ import org.json4s.jackson.Serialization.write
 import scala.collection.mutable
 import scala.util.{Try, Success}
 
-case class StatsDatum(instanceId:String, paths:Iterable[Seq[VerboseRelation]], observer:StatsObserver)
+case class StatsDatum(instanceId:String, paths:Iterable[Seq[VerboseRelation]], observer:StatsObserver) extends Serializable
 
 /**
   * Main analysis source file for the results of a benchmark run
   */
-class BenchmarkStats(data:Iterable[StatsDatum]) {
+class BenchmarkStats(data:Iterable[StatsDatum])  extends Serializable {
 
-  lazy val size: Int = data.size
+  val size: Int = data.size
 
   private lazy val (successes, failures) = data partition {
     case StatsDatum(_, p, _) =>
@@ -61,8 +61,13 @@ class BenchmarkStats(data:Iterable[StatsDatum]) {
     (iterationNumDistribution, papersDistribution, acc.toMap, concAcc.toMap, docsCon.toMap)
   }
 
-  lazy val (iterationNumDistribution, papersDistribution, actionDistribution, concreteActionDist, documentsContribution) =
-    crunchNumbers(successes map (_.observer))
+  @transient private lazy val numbers = crunchNumbers(successes map (_.observer))
+
+  lazy val iterationNumDistribution: Map[Int, Int] = numbers._1.mapValues(identity)
+  lazy val papersDistribution: Map[Int, Int] = numbers._2.mapValues(identity)
+  lazy val actionDistribution: Map[String, Int] = numbers._3.mapValues(identity)
+  lazy val concreteActionDist: Map[String, Int] = numbers._4.mapValues(identity)
+  lazy val documentsContribution: Map[String, Int] = numbers._5.mapValues(identity)
 
   def toJson(path:String) {
 

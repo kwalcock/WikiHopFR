@@ -9,7 +9,7 @@ import scala.collection.mutable
   * Try to keep the state as lean as possible to incur in minimal overhead of memory.
   * Try to keep the method implementations as simple as possible to incur in minimal time overhead.
   */
-class StatsObserver extends AgentObserver {
+class StatsObserver extends AgentObserver with Serializable {
 
   // State variables
   val actionDistribution: mutable.Map[String, Int] = new mutable.HashMap[String, Int].withDefaultValue(0)
