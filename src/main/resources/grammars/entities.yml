@@ -22,26 +22,26 @@
   pattern: |
     [entity="ORGANIZATION"]+
 
-- name: "ner-date"
-  label: Date
-  priority: ${rulepriority}
-  type: token
-  pattern: |
-    [entity="DATE"]+
-
-- name: "ner-time"
-  label: Time
-  priority: ${rulepriority}
-  type: token
-  pattern: |
-    [entity="TIME"]+
-
-- name: "ner-misc"
-  label: Misc
-  priority: ${rulepriority}
-  type: token
-  pattern: |
-    [entity="MISC"]+
+#- name: "ner-date"
+#  label: Date
+#  priority: ${rulepriority}
+#  type: token
+#  pattern: |
+#    [entity="DATE"]+
+#
+#- name: "ner-time"
+#  label: Time
+#  priority: ${rulepriority}
+#  type: token
+#  pattern: |
+#    [entity="TIME"]+
+#
+#- name: "ner-misc"
+#  label: Misc
+#  priority: ${rulepriority}
+#  type: token
+#  pattern: |
+#    [entity="MISC"]+
 
 # DATE,  TIME, MISC
 
