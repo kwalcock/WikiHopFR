@@ -4,6 +4,7 @@ import java.io.{File, FileWriter, PrintWriter}
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.typesafe.config.{Config, ConfigFactory}
+import org.clulab.processors.corenlp.CoreNLPProcessor
 import org.clulab.processors.fastnlp.FastNLPProcessor
 import org.clulab.serialization.DocumentSerializer
 import org.ml4ai.utils.{WikiHopParser, md5Hash}
@@ -37,7 +38,7 @@ class WikiHopProcessorsAnnotator(config:Config, documents:Iterable[String]){
   println(documents.size)
   println(alreadyAnnotated.size)
 
-  val processor = new FastNLPProcessor(withRelationExtraction = true)
+  val processor = new CoreNLPProcessor(withRelationExtraction = true)
   val serializer = new DocumentSerializer()
 
   val writer = new PrintWriter(new FileWriter(file, true))
