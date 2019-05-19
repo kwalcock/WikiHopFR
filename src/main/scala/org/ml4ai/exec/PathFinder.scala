@@ -20,7 +20,7 @@ object PathFinder extends App with LazyLogging{
 
   case class Unsuccessful(e: Throwable) extends Outcome
 
-  val instances = WikiHopParser.trainingInstances.take(1000)
+  val instances = WikiHopParser.trainingInstances
 
   implicit val loader: AnnotationsLoader = new AnnotationsLoader(WHConfig.Files.annotationsFile)
 
