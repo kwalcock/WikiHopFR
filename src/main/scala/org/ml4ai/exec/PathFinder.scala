@@ -20,7 +20,7 @@ object PathFinder extends App with LazyLogging{
 
   case class Unsuccessful(e: Throwable) extends Outcome
 
-  val instances = WikiHopParser.trainingInstances
+  val instances = WikiHopParser.trainingInstances.take(1000)
 
   implicit val loader: AnnotationsLoader = new AnnotationsLoader(WHConfig.Files.annotationsFile)
 
@@ -41,31 +41,39 @@ object PathFinder extends App with LazyLogging{
       }
 
       //val kg = new CoocurrenceKnowledgeGraph(instance.supportDocs)
-      val kg = WHConfig.PathFinder.knowledgeGraphType match {
+      val kgt = Try(WHConfig.PathFinder.knowledgeGraphType match {
         case "NamedEntityLink" => new NamedEntityLinkKnowledgeGraph(documentUniverse)
         case "Cooccurrence" => new CoocurrenceKnowledgeGraph(documentUniverse)
         case "OpenIE" => new OpenIEKnowledgeGraph(documentUniverse)
         case unknown => throw new UnsupportedOperationException(s"KnowledgeGraph type not implemented: $unknown")
-      }
-      val source = instance.query.split(" ").drop(1).mkString(" ")
-      val destination = instance.answer.get
+      })
 
-      val result = Try(kg.findPath(source, destination)) recoverWith {
-        case tr:java.util.NoSuchElementException =>
-          val buf = new StringWriter()
-          val writer = new PrintWriter(buf)
-          tr.printStackTrace(writer)
-          logger.error(buf.toString)
-          Failure(tr)
+      kgt match {
+        case Success(kg) =>
+          val source = instance.query.split(" ").drop(1).mkString(" ")
+          val destination = instance.answer.get
+
+          val result = Try(kg.findPath(source, destination)) recoverWith {
+            case tr:java.util.NoSuchElementException =>
+              val buf = new StringWriter()
+              val writer = new PrintWriter(buf)
+              tr.printStackTrace(writer)
+              logger.error(buf.toString)
+              Failure(tr)
+          }
+
+          val ret: Outcome = result match {
+            case Success(paths) if paths.nonEmpty => Successful(paths.toSet)
+            case Success(_) => NoPaths
+            case Failure(exception) => Unsuccessful(exception)
+          }
+
+          instance.id -> ret
+
+        case Failure(ex) =>
+          instance.id -> Unsuccessful(ex)
       }
 
-      val ret: Outcome = result match {
-        case Success(paths) if paths.nonEmpty => Successful(paths.toSet)
-        case Success(_) => NoPaths
-        case Failure(exception) => Unsuccessful(exception)
-      }
-
-      instance.id -> ret
 
     }).toMap.seq
 

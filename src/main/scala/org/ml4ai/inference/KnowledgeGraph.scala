@@ -19,13 +19,47 @@ case class KBLabel(relation:Relation)
 abstract class KnowledgeGraph(documents:Iterable[(String,Document)]) extends DotEnabled with LazyLogging{
 
 
+//  protected lazy val groupedEntityHashes: Map[Set[String], Int] = {
+//    val allLemmas = entityLemmaHashes.keySet
+//
+//    (for{
+//      current <- allLemmas
+//      candidate <- allLemmas
+//      if all(current map candidate.contains)
+//    } yield {
+//      (current, candidate)
+//    }).groupBy(_._1)
+//      .mapValues{
+//        elems =>
+//          val representative = elems.map(_._2).toSeq.maxBy(_.size)
+//          entityLemmaHashes(representative)
+//      } ++ Map(Set.empty[String] -> 0)
+//  }
+
   protected lazy val groupedEntityHashes: Map[Set[String], Int] = {
+
+    def equivalent(a:Set[String], b:Set[String]) = {
+      val largeSize =
+        if(a.size >= b.size)
+          a.size
+        else
+          b.size
+
+      val intersection = a intersect b
+
+      if(intersection.size.toDouble / largeSize.toDouble >= .5)
+        true
+      else
+        false
+    }
+
     val allLemmas = entityLemmaHashes.keySet
 
     (for{
       current <- allLemmas
       candidate <- allLemmas
-      if all(current map candidate.contains)
+      //if all(current map candidate.contains)
+      if equivalent(current, candidate)
     } yield {
       (current, candidate)
     }).groupBy(_._1)
