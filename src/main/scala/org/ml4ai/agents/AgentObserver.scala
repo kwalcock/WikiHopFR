@@ -15,6 +15,13 @@ trait AgentObserver {
   def startedEpisode(env:WikiHopEnvironment):Unit
 
   /**
+    * Called before actually taking the action
+    * @param action
+    * @param env
+    */
+  def beforeTakingAction(action: Action, env:WikiHopEnvironment):Unit
+
+  /**
     * Called after executing an action and observing the reward
     * @param action
     * @param reward

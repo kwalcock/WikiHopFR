@@ -52,7 +52,7 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
             Exploration(start.split(" ").toSet),
             Exploration(end.split(" ").toSet),
             ExplorationDouble(start.split(" ").toSet, end.split(" ").toSet),
-            Exploitation(start.split(" ").toSet, end.split(" ").toSet),
+            Exploitation(start.split(" ").toSet, end.split(" ").toSet)
           )
         // Otherwise, procedurally generate the list of actions
         case Some(kg) =>
@@ -174,7 +174,7 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
   }
 
 
-  override def observeState: State = WikiHopState(iterationNum)
+  override def observeState: State = ??? //WikiHopState(iterationNum, )
 
   override def finishedEpisode: Boolean = {
     if(iterationNum >= maxIterations)

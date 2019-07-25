@@ -26,6 +26,7 @@ class StatsObserver extends AgentObserver with Serializable {
     */
   override def startedEpisode(env: WikiHopEnvironment): Unit = ()
 
+
   /**
     * Called it after executing an action and observing the reward
     *
@@ -91,7 +92,13 @@ class StatsObserver extends AgentObserver with Serializable {
     errors = throwable::errors
   }
 
-
+  /**
+    * Called before actually taking the action
+    *
+    * @param action
+    * @param env
+    */
+  override def beforeTakingAction(action: Action, env: WikiHopEnvironment): Unit = Unit
 }
 
 object StatsObserver {

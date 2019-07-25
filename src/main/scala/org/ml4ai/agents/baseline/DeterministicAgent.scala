@@ -28,6 +28,9 @@ abstract class DeterministicAgent extends BaseAgent{
         else {
           // Select an action
           val action = selectAction(environment)
+          // Log previously to taking the action
+          for (m <- monitor)
+            m.beforeTakingAction(action, environment)
           // Execute it
           val reward = environment.execute(action)
           // Log it to the monitor
