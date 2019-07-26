@@ -35,7 +35,7 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
   private val papersRead = new mutable.HashSet[String]
   private val rng = buildRandom()
   private val startTokens = start.split(" ").toSet
-  private val endTokens = start.split(" ").toSet
+  private val endTokens = end.split(" ").toSet
 
 
 
