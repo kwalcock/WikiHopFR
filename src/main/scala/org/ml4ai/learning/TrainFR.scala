@@ -68,11 +68,10 @@ object TrainFR extends App with LazyLogging{
       successes = 0
     }
 
-    // TODO store observations
     // TODO Update policy
   }
 
-  // TODO: Do dataset split
+  // Do dataset split
   // Define the batch size
   // Collect the observations
   // Perform the update
