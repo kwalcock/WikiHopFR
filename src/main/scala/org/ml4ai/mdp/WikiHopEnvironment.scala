@@ -34,6 +34,8 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
   private val exploitedEntities = new mutable.HashSet[Set[String]]
   private val papersRead = new mutable.HashSet[String]
   private val rng = buildRandom()
+  private val startTokens = start.split(" ").toSet
+  private val endTokens = start.split(" ").toSet
 
 
 
@@ -49,10 +51,10 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
         // If this is the first call and there isn't a KG yet, generate the actions given those two nodes
         case None =>
           List(
-            Exploration(start.split(" ").toSet),
-            Exploration(end.split(" ").toSet),
-            ExplorationDouble(start.split(" ").toSet, end.split(" ").toSet),
-            Exploitation(start.split(" ").toSet, end.split(" ").toSet)
+            Exploration(startTokens),
+            Exploration(endTokens),
+            ExplorationDouble(startTokens, endTokens),
+            Exploitation(startTokens, endTokens)
           )
         // Otherwise, procedurally generate the list of actions
         case Some(kg) =>
@@ -101,7 +103,7 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
         })
       ).size
 
-    // TODO: make this parametrizable
+    // TODO: make this parameterizable
     val livingReward = 0.5
 
     val informationRatio = if(newPapers > 0) newRelations / newPapers else 0
@@ -174,7 +176,18 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
   }
 
 
-  override def observeState: State = ??? //WikiHopState(iterationNum, )
+  override def observeState: State = {
+
+    val (numNodes, numEdges) = knowledgeGraph match {
+      case Some(kg) =>
+        (kg.entities.size, kg.edges.size)
+      case None =>
+        (0, 0)
+    }
+
+    // TODO Complete this definition with the rest of the features
+    WikiHopState(iterationNum, numNodes, numEdges, startTokens, endTokens)
+  }
 
   override def finishedEpisode: Boolean = {
     if(iterationNum >= maxIterations)
@@ -240,7 +253,7 @@ object WikiHopEnvironment extends LazyLogging {
 
   def getTestingInstance(key:String):WikiHopInstance = getInstance(WikiHopParser.testingInstances, key)
 
-  lazy val annotationsLoader = new AnnotationsLoader(WHConfig.Files.annotationsFile, cache = false)
+  lazy val annotationsLoader = new AnnotationsLoader(WHConfig.Files.annotationsFile, cache = WHConfig.Environment.cacheAnnotations)
 
   def buildKnowledgeGraph(docs:Iterable[String])(implicit loader:AnnotationsLoader):KnowledgeGraph = WHConfig.Environment.knowledgeGraphType match {
 

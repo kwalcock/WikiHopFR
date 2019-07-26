@@ -45,15 +45,27 @@ object TrainFR extends App with LazyLogging{
     }
   }
 
-  for(ep <- 1 to 1000){
+  var successes = 0
+
+  for(ep <- 1 to episode){
+    logger.info(s"Epoch $ep")
     val agent = new PolicyAgent(policy)
     val outcome = agent.runEpisode(instance, Some(trainingObserver))
+
+    val successful = outcome.nonEmpty
+    if(successful)
+      successes += 1
+
+    if(ep % 100 == 0){
+      val successRate = successes / 100.0
+      logger.info(s"Success rate of $successRate for the last 100 episodes")
+      successes = 0
+    }
 
     // TODO store observations
     // TODO Update policy
   }
 
-  val selectedInstance = selectSmall(instances)
   // TODO: Do dataset split
   // Define the batch size
   // Collect the observations
