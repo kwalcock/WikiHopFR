@@ -34,7 +34,7 @@ class StatsObserver extends AgentObserver with Serializable {
     * @param reward
     * @param env
     */
-  override def actionTaken(action: Action, reward: Double, numDocsAdded:Int, env: WikiHopEnvironment): Unit = {
+  override def actionTaken(action: Action, reward: Float, numDocsAdded:Int, env: WikiHopEnvironment): Unit = {
     import StatsObserver._
     // Increment action counters
     action match {
@@ -55,7 +55,7 @@ class StatsObserver extends AgentObserver with Serializable {
     * @param reward
     * @param env
     */
-  override def concreteActionTaken(action: Action, reward: Double, numDocsAdded:Int, env: WikiHopEnvironment): Unit = {
+  override def concreteActionTaken(action: Action, reward: Float, numDocsAdded:Int, env: WikiHopEnvironment): Unit = {
     import StatsObserver._
     // Increment action counters
     action match {

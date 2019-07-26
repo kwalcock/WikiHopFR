@@ -15,6 +15,8 @@ class TransitionMemory[A](val maxSize:Int = 100000) extends mutable.Queue[A]{
     this ++= transitions
   }
 
+  def remember(transition:A): Unit = remember(Iterable(transition))
+
   def sample(size:Int)(implicit rng:Random):Iterable[A] = {
     // This code does sample with replacement, however with a large enough memory it should be very unlikely to happen
     // and shouldn't be a big issue for training

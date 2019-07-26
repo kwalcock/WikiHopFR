@@ -27,7 +27,7 @@ trait AgentObserver {
     * @param reward
     * @param env
     */
-  def actionTaken(action:Action, reward:Double, numDocsAdded:Int, env:WikiHopEnvironment):Unit
+  def actionTaken(action:Action, reward:Float, numDocsAdded:Int, env:WikiHopEnvironment):Unit
 
   /**
     * Similar to action taken, but returns a concrete action. I.e. Instead of Random Action,
@@ -36,7 +36,7 @@ trait AgentObserver {
     * @param reward
     * @param env
     */
-  def concreteActionTaken(action:Action, reward:Double, numDocsAdded:Int, env:WikiHopEnvironment):Unit
+  def concreteActionTaken(action:Action, reward:Float, numDocsAdded:Int, env:WikiHopEnvironment):Unit
 
   /**
     * Called once after finishing the episode finishes

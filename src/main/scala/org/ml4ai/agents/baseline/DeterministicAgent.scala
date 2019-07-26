@@ -32,7 +32,7 @@ abstract class DeterministicAgent extends BaseAgent{
           for (m <- monitor)
             m.beforeTakingAction(action, environment)
           // Execute it
-          val reward = environment.execute(action)
+          val reward = environment.execute(action).toFloat
           // Log it to the monitor
           for (m <- monitor) {
             m.actionTaken(action, reward, environment.numDocumentsAdded, environment)
