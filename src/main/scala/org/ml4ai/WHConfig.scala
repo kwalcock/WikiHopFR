@@ -67,4 +67,18 @@ object WHConfig {
 
     val numInstances:Option[Int] = Try(f.getInt("numInstances")).toOption
   }
+
+  object Training {
+    private val f = config.getConfig("training")
+    val episodes: Int = f.getInt("episodes")
+    val targetUpdate: Int = f.getInt("targetUpdate")
+    val transitionMemorySize: Int = f.getInt("transitionMemorySize")
+
+    object Epsilon {
+      private val g = config.getConfig("epsilon")
+
+      val upperBound:Double = g.getDouble("upperBound")
+      val lowerBound:Double = g.getDouble("lowerBound")
+    }
+  }
 }

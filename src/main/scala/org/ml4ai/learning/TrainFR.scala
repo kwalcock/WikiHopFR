@@ -1,10 +1,11 @@
 package org.ml4ai.learning
 
 import com.typesafe.scalalogging.LazyLogging
-import org.ml4ai.WikiHopInstance
+import org.ml4ai.{WHConfig, WikiHopInstance}
 import org.ml4ai.agents.{AgentObserver, EpGreedyPolicy, PolicyAgent}
 import org.ml4ai.mdp.{WikiHopEnvironment, WikiHopState}
 import org.ml4ai.utils.{TransitionMemory, WikiHopParser}
+import org.sarsamora.Decays
 import org.sarsamora.actions.Action
 import org.sarsamora.states.State
 
@@ -22,13 +23,12 @@ object TrainFR extends App with LazyLogging{
   // Load the data
   val instances = WikiHopParser.trainingInstances
 
-  // TODO: Parameterize all these numbers into the application.conf file
-  val numEpisodes = 1000
-  val targetUpdate = 100
+  val numEpisodes = WHConfig.Training.episodes
+  val targetUpdate = WHConfig.Training.targetUpdate
   // TODO: Maybe refactor the decay out of the policy
   // TODO: Implement the DQN
-  val policy = new EpGreedyPolicy(org.sarsamora.Decays.exponentialDecay(.999, 0.001, numEpisodes*10, 0).iterator, None)
-  val memory = new TransitionMemory[Transition](maxSize = 100000)
+  val policy = new EpGreedyPolicy(Decays.exponentialDecay(WHConfig.Training.Epsilon.upperBound, WHConfig.Training.Epsilon.lowerBound, numEpisodes*10, 0).iterator, None)
+  val memory = new TransitionMemory[Transition](maxSize = WHConfig.Training.transitionMemorySize)
 
   val instance = selectSmall(instances)
 
