@@ -11,6 +11,8 @@ case class WikiHopState(iterationNum:Int,
                        ) extends State {
   override def toFeatures: Map[String, Double] =
     Map(
-      "iterationNum" -> iterationNum
+      "iterationNum" -> iterationNum,
+      "numNodes" -> numNodes,
+      "numEdges" -> numEdges,
     )
 }

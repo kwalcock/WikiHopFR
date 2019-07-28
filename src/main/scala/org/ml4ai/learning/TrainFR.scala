@@ -2,7 +2,7 @@ package org.ml4ai.learning
 
 import com.typesafe.scalalogging.LazyLogging
 import org.ml4ai.WikiHopInstance
-import org.ml4ai.agents.{AgentObserver, PolicyAgent}
+import org.ml4ai.agents.{AgentObserver, EpGreedyPolicy, PolicyAgent}
 import org.ml4ai.mdp.{WikiHopEnvironment, WikiHopState}
 import org.ml4ai.utils.{TransitionMemory, WikiHopParser}
 import org.sarsamora.actions.Action
@@ -12,12 +12,22 @@ object TrainFR extends App with LazyLogging{
 
   def selectSmall(instances: Seq[WikiHopInstance]) = instances.head // TODO: implement this correctly
 
+  /**
+    * Tests whether the parameters converged since the last update
+    * @return
+    */
+  def converged = false // TODO: Implement this correctly
+
   // Load the config
   // Load the data
   val instances = WikiHopParser.trainingInstances
 
-  val episode = 1000
-  val policy = None
+  // TODO: Parameterize all these numbers into the application.conf file
+  val numEpisodes = 1000
+  val targetUpdate = 100
+  // TODO: Maybe refactor the decay out of the policy
+  // TODO: Implement the DQN
+  val policy = new EpGreedyPolicy(org.sarsamora.Decays.exponentialDecay(.999, 0.001, numEpisodes*10, 0).iterator, None)
   val memory = new TransitionMemory[Transition](maxSize = 100000)
 
   val instance = selectSmall(instances)
@@ -53,22 +63,23 @@ object TrainFR extends App with LazyLogging{
 
   var successes = 0
 
-  for(ep <- 1 to episode){
-    logger.info(s"Epoch $ep")
-    val agent = new PolicyAgent(policy)
-    val outcome = agent.runEpisode(instance, Some(trainingObserver))
+  for(ep <- 1 to numEpisodes){
+    if(!converged || ep < targetUpdate) {
+      logger.info(s"Epoch $ep")
+      val agent = new PolicyAgent(policy)
+      val outcome = agent.runEpisode(instance, Some(trainingObserver))
 
-    val successful = outcome.nonEmpty
-    if(successful)
-      successes += 1
+      val successful = outcome.nonEmpty
+      if (successful)
+        successes += 1
 
-    if(ep % 100 == 0){
-      val successRate = successes / 100.0
-      logger.info(s"Success rate of $successRate for the last 100 episodes")
-      successes = 0
+      if (ep % targetUpdate == 0) {
+        val successRate = successes / targetUpdate.toFloat
+        logger.info(s"Success rate of $successRate for the last 100 episodes")
+        successes = 0
+        // TODO call the update procedure
+      }
     }
-
-    // TODO Update policy
   }
 
   // Do dataset split
