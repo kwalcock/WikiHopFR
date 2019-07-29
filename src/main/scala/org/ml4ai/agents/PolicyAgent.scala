@@ -1,7 +1,6 @@
 package org.ml4ai.agents
 import org.ml4ai.agents.baseline.DeterministicAgent
-import org.ml4ai.inference.VerboseRelation
-import org.ml4ai.mdp.{RandomAction, WikiHopEnvironment}
+import org.ml4ai.mdp.WikiHopEnvironment
 import org.sarsamora.actions.Action
 
 class PolicyAgent(policy:EpGreedyPolicy) extends DeterministicAgent {
