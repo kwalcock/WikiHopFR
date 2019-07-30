@@ -231,6 +231,11 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
     case None => Map.empty
   }
 
+  /**
+    * @return top entities to be considered as target of an action
+    */
+  def topEntities:Seq[Set[String]] = ??? // TODO: Implement by euclidian distance of their embeddings
+
 }
 
 object WikiHopEnvironment extends LazyLogging {

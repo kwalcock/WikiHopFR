@@ -1,6 +1,7 @@
 package org.ml4ai.learning
 
-import edu.cmu.dynet.{ComputationGraph, Dim, Expression, FloatVector, ParameterCollection}
+import edu.cmu.dynet.{ComputationGraph, Dim, Expression, FloatVector, ParameterCollection, Tensor}
+import org.ml4ai.mdp.WikiHopState
 
 class DQN(embeddingsDimension:Int) {
 
@@ -14,16 +15,25 @@ class DQN(embeddingsDimension:Int) {
 
   ComputationGraph.renew()
 
-  def apply(states:Seq[(Int, Int)]) = {
-    val W = Expression.parameter(pW)
-    val b = Expression.parameter(pb)
-    val X = Expression.parameter(pX)
-    val c = Expression.parameter(pc)
-
-    //    val input = FloatVector.Seq2FloatVector(states.flatMap{ case (a, b) => Seq(a.toFloat, b.toFloat)})
-    //    val x = Expression.input(Dim(2, states.size), input)
-    val x = Expression.concatenateToBatch(states map { s => Expression.input(Dim(2), FloatVector.Seq2FloatVector(Seq(s._1.toFloat, s._2.toFloat)))})
-
-    X * Expression.tanh(W*x + b) + c
+  def apply(input:FloatVector):Expression = {
+//    val W = Expression.parameter(pW)
+//    val b = Expression.parameter(pb)
+//    val X = Expression.parameter(pX)
+//    val c = Expression.parameter(pc)
+//
+//    val input = FloatVector.Seq2FloatVector(states.flatMap{ case (a, b) => Seq(a.toFloat, b.toFloat)})
+//    val x = Expression.input(Dim(2, states.size), input)
+////    val x = Expression.concatenateToBatch(states map { s => Expression.input(Dim(2), FloatVector.Seq2FloatVector(Seq(s._1.toFloat, s._2.toFloat)))})
+//
+//    X * Expression.tanh(W*x + b) + c
+    ???
   }
+
+  def apply(inputs:Seq[FloatVector]):Expression = {
+    // Concatenate all the state vectors into an input matrix
+    ???
+  }
+
+  // TODO implement this
+  def vectorize(state:WikiHopState, entityA:Set[String], entityB:Set[String]):FloatVector = ???
 }

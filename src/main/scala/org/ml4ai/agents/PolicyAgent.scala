@@ -1,6 +1,6 @@
 package org.ml4ai.agents
 import org.ml4ai.agents.baseline.DeterministicAgent
-import org.ml4ai.mdp.WikiHopEnvironment
+import org.ml4ai.mdp.{WikiHopEnvironment, WikiHopState}
 import org.sarsamora.actions.Action
 
 class PolicyAgent(policy:EpGreedyPolicy) extends DeterministicAgent {
@@ -12,7 +12,7 @@ class PolicyAgent(policy:EpGreedyPolicy) extends DeterministicAgent {
   override protected def selectAction(environment: WikiHopEnvironment): Action = {
     // This may seem redundant, however, an agent may not use a policy to select an action. The redundancy is only
     // for the specific case of the policy agent.
-    policy.selectAction(environment.observeState)
+    policy.selectAction(environment.observeState.asInstanceOf[WikiHopState], environment.topEntities)
   }
 
 }
