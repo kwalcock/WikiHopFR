@@ -17,6 +17,7 @@ object WHConfig {
     val entityListFile: String = f.getString("entityListFile")
     val graphvizDir: String = f.getString("graphvizDir")
     val benchmarkOutput: String = f.getString("benchmarkOutput")
+    val glovePath:String = f.getString("glovePath")
   }
 
   object PathFinder {

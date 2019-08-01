@@ -4,7 +4,7 @@ import com.typesafe.scalalogging.LazyLogging
 import org.ml4ai.{WHConfig, WikiHopInstance}
 import org.ml4ai.inference._
 import org.ml4ai.ir.LuceneHelper
-import org.ml4ai.utils.{AnnotationsLoader, WikiHopParser}
+import org.ml4ai.utils.{AnnotationsLoader, WikiHopParser, filterUselessLemmas}
 import org.sarsamora.actions.Action
 import org.sarsamora.environment.Environment
 import org.sarsamora.states.State
@@ -13,6 +13,7 @@ import org.ml4ai.utils.buildRandom
 import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 import WikiHopEnvironment.buildKnowledgeGraph
+import org.clulab.embeddings.word2vec.Word2Vec
 
 class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Option[Set[String]] = None) extends Environment with LazyLogging {
 
@@ -234,7 +235,7 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
   /**
     * @return top entities to be considered as target of an action
     */
-  def topEntities:Seq[Set[String]] = ??? // TODO: Implement by euclidian distance of their embeddings
+  def topEntities:Seq[Set[String]] = ??? // TODO: Implement by euclidean distance of their embeddings
 
 }
 
@@ -269,4 +270,18 @@ object WikiHopEnvironment extends LazyLogging {
       throw new UnsupportedOperationException(s"Type $t is not a recognized KnowledgeGraph implementation")
 
   }
+
+  /**
+    * Returns the word embeddings associated with the entities of this environment
+    * @return
+    */
+    def embeddings(env:WikiHopEnvironment):Word2Vec = {
+      // Load the entities of the environment
+      val entities = env.knowledgeGraph.get.entities
+      val processedEntities = entities map  filterUselessLemmas
+      val uniqueTerms = processedEntities.flatten.toSet
+      // Load the W2V instance only with those entities
+
+      new Word2Vec(WHConfig.Files.glovePath, Some(uniqueTerms))
+    }
 }
