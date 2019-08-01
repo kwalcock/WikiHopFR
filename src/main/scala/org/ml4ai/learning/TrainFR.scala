@@ -19,6 +19,18 @@ object TrainFR extends App with LazyLogging{
     */
   def converged = false // TODO: Implement this correctly
 
+  /**
+    * Updates the network with a minibatch
+    * @param network
+    */
+  def updateParameters(network:DQN):Unit = {
+    // TODO Implement this
+
+    // Sample a minibatch
+    // Do the TD learning step
+    // Call backprop
+  }
+
   // Load the config
   // Load the data
   val instances = WikiHopParser.trainingInstances

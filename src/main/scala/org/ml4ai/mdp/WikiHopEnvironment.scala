@@ -13,6 +13,7 @@ import org.ml4ai.utils.buildRandom
 import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 import WikiHopEnvironment.buildKnowledgeGraph
+import org.clulab.embeddings.word2vec
 import org.clulab.embeddings.word2vec.Word2Vec
 
 class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Option[Set[String]] = None) extends Environment with LazyLogging {
@@ -237,12 +238,15 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
     */
   def topEntities:Seq[Set[String]] = ??? // TODO: Implement by euclidean distance of their embeddings
 
+  // Embeddings relevant only to the entities of this environment
+  lazy val embeddings: Word2Vec = WikiHopEnvironment.loadEmbeddings(this)
+
 }
 
 object WikiHopEnvironment extends LazyLogging {
 
 
-  private def getInstance(data:Iterable[WikiHopInstance], key:String):WikiHopInstance =
+  private def getInstance(data: Iterable[WikiHopInstance], key: String): WikiHopInstance =
     Try(data.filter(_.id == key)) match {
       case Success(values) if values.size == 1 => values.head
       case Success(_) =>
@@ -255,13 +259,13 @@ object WikiHopEnvironment extends LazyLogging {
 
     }
 
-  def getTrainingInstance(key:String):WikiHopInstance = getInstance(WikiHopParser.trainingInstances, key)
+  def getTrainingInstance(key: String): WikiHopInstance = getInstance(WikiHopParser.trainingInstances, key)
 
-  def getTestingInstance(key:String):WikiHopInstance = getInstance(WikiHopParser.testingInstances, key)
+  def getTestingInstance(key: String): WikiHopInstance = getInstance(WikiHopParser.testingInstances, key)
 
   lazy val annotationsLoader = new AnnotationsLoader(WHConfig.Files.annotationsFile, cache = WHConfig.Environment.cacheAnnotations)
 
-  def buildKnowledgeGraph(docs:Iterable[String])(implicit loader:AnnotationsLoader):KnowledgeGraph = WHConfig.Environment.knowledgeGraphType match {
+  def buildKnowledgeGraph(docs: Iterable[String])(implicit loader: AnnotationsLoader): KnowledgeGraph = WHConfig.Environment.knowledgeGraphType match {
 
     case "Coocurrence" => new CoocurrenceKnowledgeGraph(docs)
     case "OpenIE" => new OpenIEKnowledgeGraph(docs)
@@ -273,15 +277,24 @@ object WikiHopEnvironment extends LazyLogging {
 
   /**
     * Returns the word embeddings associated with the entities of this environment
+    *
     * @return
     */
-    def embeddings(env:WikiHopEnvironment):Word2Vec = {
-      // Load the entities of the environment
-      val entities = env.knowledgeGraph.get.entities
-      val processedEntities = entities map  filterUselessLemmas
-      val uniqueTerms = processedEntities.flatten.toSet
-      // Load the W2V instance only with those entities
+  def loadEmbeddings(env: WikiHopEnvironment): Word2Vec = {
+    // Load the entities of the environment
+    val entities = env.knowledgeGraph.get.entities
+    val processedEntities = entities map filterUselessLemmas
+    val uniqueTerms = processedEntities.flatten.toSet
+    // Load the W2V instance only with those entities
 
-      new Word2Vec(WHConfig.Files.glovePath, Some(uniqueTerms))
-    }
+    new Word2Vec(WHConfig.Files.glovePath, Some(uniqueTerms))
+  }
+
+  /**
+    * Loads all the embeddings
+    */
+  def loadEmbeddings(): Word2Vec = {
+    new Word2Vec(WHConfig.Files.glovePath)
+  }
+
 }
