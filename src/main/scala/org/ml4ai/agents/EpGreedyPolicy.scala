@@ -41,9 +41,7 @@ class EpGreedyPolicy(decay:Iterator[Double], network:DQN) extends Policy {
           entityA <- candidateEntities
           entityB <- candidateEntities
         } yield {
-          // This call creates a FloatVector from the state representation and the entity
-          val stateVector = network.vectorize(state, entityA, entityB)
-          val actionVals = network(stateVector).value()
+          val actionVals = network((state, entityA, entityB)).value()
           val (actionIx, actionValue) = (argMax(actionVals).head, max(actionVals).head)
           (actionIx, actionValue, entityA, entityB)
         }

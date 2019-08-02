@@ -7,18 +7,29 @@ import org.sarsamora.states.State
 class DQN(params:ParameterCollection, embeddingsHelper: EmbeddingsHelper) {
 
   private val embeddingsDimension = embeddingsHelper.embeddingsDim
-  private val featureVectorSize = embeddingsDimension + 4
+  private val featureVectorSize = 2*embeddingsDimension + 4 // TODO update this
 
-  private val pW = params.addParameters(Dim(5, embeddingsDimension))
+  private val pW = params.addParameters(Dim(5, 2*embeddingsDimension))
   private val pb = params.addParameters(Dim(5))
   private val pX = params.addParameters(Dim(4, 5))
   private val pc = params.addParameters(Dim(4))
 
   ComputationGraph.renew()
 
-  def apply(input:FloatVector): Expression = this(Seq(input))
+  def apply(input:(WikiHopState, Set[String], Set[String])): Expression = this(Seq(input))
 
-  def apply(input:Iterable[FloatVector]):Expression = {
+  def apply(input:Iterable[(WikiHopState, Set[String], Set[String])]):Expression = {
+
+    val inputVectors = input map {
+      case (state, entityA, entityB) =>
+        val features = vectorizeState(state)
+        val featureVector = Expression.input(Dim(features.size), features)
+        val embA = embeddingsHelper.lookup(entityA)
+        val embB = embeddingsHelper.lookup(entityB)
+
+        Expression.concatenate(featureVector, aggregateEmbeddings(embA), aggregateEmbeddings(embB))
+    }
+
 //    val W = Expression.parameter(pW)
 //    val b = Expression.parameter(pb)
 //    val X = Expression.parameter(pX)
@@ -37,6 +48,26 @@ class DQN(params:ParameterCollection, embeddingsHelper: EmbeddingsHelper) {
     ???
   }
 
-  // TODO implement this
-  def vectorize(state:WikiHopState, entityA:Set[String], entityB:Set[String]):FloatVector = ???
+  /**
+    * Converts a state into a DyNET FloatVector
+    * @param state instance
+    * @return FloatVector to be used as instance
+    */
+  def vectorizeState(state:WikiHopState):FloatVector = {
+    val features = Seq(
+      state.iterationNum,
+      state.numNodes,
+      state.numEdges
+    )
+
+    FloatVector.Seq2FloatVector(features map (_.toFloat))
+  }
+
+  /**
+    * Aggregates entity embeddings by certain criteria to yield a unique entity embedding
+    */
+  private def aggregateEmbeddings(embs:Iterable[Expression]) = {
+    // TODO: Add more nuance here
+    Expression.average(embs.toSeq)
+  }
 }

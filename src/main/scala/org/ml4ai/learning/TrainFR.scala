@@ -48,31 +48,30 @@ object TrainFR extends App with LazyLogging{
         }
     }
 
-    val stateVectors = (states zip selectedEntities) map { case(s, (ea, eb)) => network.vectorize(s, ea, eb)}
-    val stateValues = network(stateVectors)
+    val stateValues = network((states zip selectedEntities) map { case(s, (ea, eb)) => (s, ea, eb) })
 
     val nextStates = miniBatch map { m => m.nextState }
     val rewards = miniBatch map { _.reward }
 
-    val nextActionVals = max(network(nextStates.toArray.toSeq).value())
+//    val nextActionVals = max(network(nextStates.toArray.toSeq).value())
 
-    val updates = (rewards zip nextActionVals) map { case (r, q) => r + GAMMA*q}
+//    val updates = (rewards zip nextActionVals) map { case (r, q) => r + GAMMA*q}
 
-    val actions = miniBatch.map(_.action)
+//    val actions = miniBatch.map(_.action)
 
-    val targetStateValuesData =
-      for(((action, tv), u) <- (actions zip stateValues.value().toSeq().grouped(4).toSeq).zip(updates) ) yield {
-        val ret = tv.toArray
-        ret(0) = u.toFloat // TODO: Select the correct action
-        ret
-      }
-
-    val targetStateValues = Expression.input(stateValues.dim(), FloatVector.Seq2FloatVector(targetStateValuesData.flatten.toSeq))
-
-    val loss = mseLoss(stateValues, targetStateValues)
+//    val targetStateValuesData =
+//      for(((action, tv), u) <- (actions zip stateValues.value().toSeq().grouped(4).toSeq).zip(updates) ) yield {
+//        val ret = tv.toArray
+//        ret(0) = u.toFloat // TODO: Select the correct action
+//        ret
+//      }
+//
+//    val targetStateValues = Expression.input(stateValues.dim(), FloatVector.Seq2FloatVector(targetStateValuesData.flatten.toSeq))
+//
+//    val loss = mseLoss(stateValues, targetStateValues)
 
     //    ComputationGraph.forward(loss)
-    ComputationGraph.backward(loss)
+//    ComputationGraph.backward(loss)
 
     optimizer.update()
   }
