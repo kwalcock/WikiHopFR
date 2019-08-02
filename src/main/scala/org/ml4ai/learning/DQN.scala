@@ -2,6 +2,7 @@ package org.ml4ai.learning
 
 import edu.cmu.dynet.{ComputationGraph, Dim, Expression, FloatVector, ParameterCollection, Tensor}
 import org.ml4ai.mdp.WikiHopState
+import org.sarsamora.states.State
 
 class DQN(params:ParameterCollection, embeddingsHelper: EmbeddingsHelper) {
 
@@ -15,7 +16,9 @@ class DQN(params:ParameterCollection, embeddingsHelper: EmbeddingsHelper) {
 
   ComputationGraph.renew()
 
-  def apply(input:FloatVector):Expression = {
+  def apply(input:FloatVector): Expression = this(Seq(input))
+
+  def apply(input:Iterable[FloatVector]):Expression = {
 //    val W = Expression.parameter(pW)
 //    val b = Expression.parameter(pb)
 //    val X = Expression.parameter(pX)

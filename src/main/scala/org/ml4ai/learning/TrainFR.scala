@@ -1,14 +1,17 @@
 package org.ml4ai.learning
 
 import com.typesafe.scalalogging.LazyLogging
-import edu.cmu.dynet.ParameterCollection
+import edu.cmu.dynet.{ComputationGraph, Expression, FloatVector, ParameterCollection, RMSPropTrainer, Trainer}
 import org.ml4ai.{WHConfig, WikiHopInstance}
 import org.ml4ai.agents.{AgentObserver, EpGreedyPolicy, PolicyAgent}
-import org.ml4ai.mdp.{WikiHopEnvironment, WikiHopState}
-import org.ml4ai.utils.{TransitionMemory, WikiHopParser}
+import org.ml4ai.mdp.{Exploitation, Exploration, ExplorationDouble, WikiHopEnvironment, WikiHopState}
+import org.ml4ai.utils.{TransitionMemory, WikiHopParser, buildRandom}
 import org.sarsamora.Decays
 import org.sarsamora.actions.Action
 import org.sarsamora.states.State
+import sun.reflect.generics.reflectiveObjects.NotImplementedException
+
+import scala.util.Random
 
 object TrainFR extends App with LazyLogging{
 
@@ -24,12 +27,54 @@ object TrainFR extends App with LazyLogging{
     * Updates the network with a minibatch
     * @param network
     */
-  def updateParameters(network:DQN):Unit = {
-    // TODO Implement this
+  def updateParameters(network:DQN, trainer:Trainer)(implicit rng:Random):Unit = {
+    // Sample a mini batch
+    val miniBatch = memory.sample(1000)
 
-    // Sample a minibatch
-    // Do the TD learning step
-    // Call backprop
+    // TODO: Refactor this parameter
+    val GAMMA = .9
+
+    // Renew the computational graph
+    ComputationGraph.renew()
+
+    val states = miniBatch map { m => m.state}
+    val selectedEntities = miniBatch map {
+      tr =>
+        tr.action match {
+          case Exploration(single) => (single, single)
+          case ExplorationDouble(entityA, entityB) => (entityA, entityB)
+          case Exploitation(entityA, entityB) => (entityA, entityB)
+          case _ => throw new NotImplementedException
+        }
+    }
+
+    val stateVectors = (states zip selectedEntities) map { case(s, (ea, eb)) => network.vectorize(s, ea, eb)}
+    val stateValues = network(stateVectors)
+
+    val nextStates = miniBatch map { m => m.nextState }
+    val rewards = miniBatch map { _.reward }
+
+    val nextActionVals = max(network(nextStates.toArray.toSeq).value())
+
+    val updates = (rewards zip nextActionVals) map { case (r, q) => r + GAMMA*q}
+
+    val actions = miniBatch.map(_.action)
+
+    val targetStateValuesData =
+      for(((action, tv), u) <- (actions zip stateValues.value().toSeq().grouped(4).toSeq).zip(updates) ) yield {
+        val ret = tv.toArray
+        ret(0) = u.toFloat // TODO: Select the correct action
+        ret
+      }
+
+    val targetStateValues = Expression.input(stateValues.dim(), FloatVector.Seq2FloatVector(targetStateValuesData.flatten.toSeq))
+
+    val loss = mseLoss(stateValues, targetStateValues)
+
+    //    ComputationGraph.forward(loss)
+    ComputationGraph.backward(loss)
+
+    optimizer.update()
   }
 
 
@@ -43,7 +88,9 @@ object TrainFR extends App with LazyLogging{
   val eh = new EmbeddingsHelper(params)
   val network = new DQN(params, eh)
 
-  // TODO: Initialize the optimizer
+  // Initialize the optimizer
+  val optimizer = new RMSPropTrainer(params, learningRate = .01f, rho = .99f)
+  implicit val rng = buildRandom()
 
   val policy = new EpGreedyPolicy(Decays.exponentialDecay(WHConfig.Training.Epsilon.upperBound, WHConfig.Training.Epsilon.lowerBound, numEpisodes*10, 0).iterator, network)
   val memory = new TransitionMemory[Transition](maxSize = WHConfig.Training.transitionMemorySize)
@@ -52,13 +99,13 @@ object TrainFR extends App with LazyLogging{
 
   val trainingObserver: AgentObserver = new AgentObserver {
 
-    var state:Option[State] = None
+    var state:Option[WikiHopState] = None
 
     override def startedEpisode(env: WikiHopEnvironment): Unit = {}
 
     override def beforeTakingAction(action: Action, env: WikiHopEnvironment): Unit = {
       // Save the state observation before taking the action
-      state = Some(env.observeState)
+      state = Some(env.observeState.asInstanceOf[WikiHopState])
     }
 
     override def actionTaken(action: Action, reward: Float, numDocsAdded: Int, env: WikiHopEnvironment): Unit = {
