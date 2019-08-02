@@ -3,15 +3,15 @@ package org.ml4ai.learning
 import edu.cmu.dynet.{ComputationGraph, Dim, Expression, FloatVector, ParameterCollection, Tensor}
 import org.ml4ai.mdp.WikiHopState
 
-class DQN(embeddingsDimension:Int) {
+class DQN(params:ParameterCollection, embeddingsHelper: EmbeddingsHelper) {
 
+  private val embeddingsDimension = embeddingsHelper.embeddingsDim
   private val featureVectorSize = embeddingsDimension + 4
-  val params = new ParameterCollection()
 
-  val pW = params.addParameters(Dim(5, embeddingsDimension))
-  val pb = params.addParameters(Dim(5))
-  val pX = params.addParameters(Dim(4, 5))
-  val pc = params.addParameters(Dim(4))
+  private val pW = params.addParameters(Dim(5, embeddingsDimension))
+  private val pb = params.addParameters(Dim(5))
+  private val pX = params.addParameters(Dim(4, 5))
+  private val pc = params.addParameters(Dim(4))
 
   ComputationGraph.renew()
 

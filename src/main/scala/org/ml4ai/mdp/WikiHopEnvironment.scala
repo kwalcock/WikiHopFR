@@ -238,9 +238,6 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
     */
   def topEntities:Seq[Set[String]] = ??? // TODO: Implement by euclidean distance of their embeddings
 
-  // Embeddings relevant only to the entities of this environment
-  lazy val embeddings: Word2Vec = WikiHopEnvironment.loadEmbeddings(this)
-
 }
 
 object WikiHopEnvironment extends LazyLogging {
@@ -275,26 +272,26 @@ object WikiHopEnvironment extends LazyLogging {
 
   }
 
-  /**
-    * Returns the word embeddings associated with the entities of this environment
-    *
-    * @return
-    */
-  def loadEmbeddings(env: WikiHopEnvironment): Word2Vec = {
-    // Load the entities of the environment
-    val entities = env.knowledgeGraph.get.entities
-    val processedEntities = entities map filterUselessLemmas
-    val uniqueTerms = processedEntities.flatten.toSet
-    // Load the W2V instance only with those entities
-
-    new Word2Vec(WHConfig.Files.glovePath, Some(uniqueTerms))
-  }
-
-  /**
-    * Loads all the embeddings
-    */
-  def loadEmbeddings(): Word2Vec = {
-    new Word2Vec(WHConfig.Files.glovePath)
-  }
+//  /**
+//    * Returns the word embeddings associated with the entities of this environment
+//    *
+//    * @return
+//    */
+//  def loadEmbeddings(env: WikiHopEnvironment): Word2Vec = {
+//    // Load the entities of the environment
+//    val entities = env.knowledgeGraph.get.entities
+//    val processedEntities = entities map filterUselessLemmas
+//    val uniqueTerms = processedEntities.flatten.toSet
+//    // Load the W2V instance only with those entities
+//
+//    new Word2Vec(WHConfig.Files.glovePath, Some(uniqueTerms))
+//  }
+//
+//  /**
+//    * Loads all the embeddings
+//    */
+//  def loadEmbeddings(): Word2Vec = {
+//    new Word2Vec(WHConfig.Files.glovePath)
+//  }
 
 }

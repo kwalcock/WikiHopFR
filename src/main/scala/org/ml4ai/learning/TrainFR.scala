@@ -1,6 +1,7 @@
 package org.ml4ai.learning
 
 import com.typesafe.scalalogging.LazyLogging
+import edu.cmu.dynet.ParameterCollection
 import org.ml4ai.{WHConfig, WikiHopInstance}
 import org.ml4ai.agents.{AgentObserver, EpGreedyPolicy, PolicyAgent}
 import org.ml4ai.mdp.{WikiHopEnvironment, WikiHopState}
@@ -31,13 +32,19 @@ object TrainFR extends App with LazyLogging{
     // Call backprop
   }
 
-  // Load the config
+
   // Load the data
   val instances = WikiHopParser.trainingInstances
 
   val numEpisodes = WHConfig.Training.episodes
   val targetUpdate = WHConfig.Training.targetUpdate
-  val network = new DQN(50)
+
+  val params = new ParameterCollection()
+  val eh = new EmbeddingsHelper(params)
+  val network = new DQN(params, eh)
+
+  // TODO: Initialize the optimizer
+
   val policy = new EpGreedyPolicy(Decays.exponentialDecay(WHConfig.Training.Epsilon.upperBound, WHConfig.Training.Epsilon.lowerBound, numEpisodes*10, 0).iterator, network)
   val memory = new TransitionMemory[Transition](maxSize = WHConfig.Training.transitionMemorySize)
 
