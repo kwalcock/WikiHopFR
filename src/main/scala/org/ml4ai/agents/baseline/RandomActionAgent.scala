@@ -2,10 +2,12 @@ package org.ml4ai.agents.baseline
 import org.ml4ai.mdp.{RandomAction, WikiHopEnvironment}
 import org.sarsamora.actions.Action
 
+import scala.util.Random
+
 /**
   * Simplest random agent. Behaves randomly
   */
-final class RandomActionAgent extends DeterministicAgent {
+final class RandomActionAgent(implicit rng:Random) extends DeterministicAgent {
   /**
     * Always return the random action
     * @param environment disregarded in this particular implementation

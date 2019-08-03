@@ -6,7 +6,7 @@ import org.clulab.utils.Serializer
 import org.ml4ai.{WHConfig, WikiHopInstance}
 import org.ml4ai.agents.{BaseAgent, StatsObserver}
 import org.ml4ai.agents.baseline.{CascadeAgent, RandomActionAgent}
-import org.ml4ai.utils.{BenchmarkStats, StatsDatum, WikiHopParser}
+import org.ml4ai.utils.{BenchmarkStats, StatsDatum, WikiHopParser, rng}
 
 import concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration.Duration

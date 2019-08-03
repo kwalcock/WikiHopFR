@@ -60,4 +60,7 @@ package object utils {
   // Set random seed to our global random number generator
   def buildRandom(seed:Int = 1024):Random = new Random(seed)
 
+  // Global random number generator
+  implicit lazy val rng: Random = buildRandom()
+
 }

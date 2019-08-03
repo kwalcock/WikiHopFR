@@ -3,11 +3,12 @@ package org.ml4ai.agents.baseline
 import org.ml4ai.agents.{AgentObserver, BaseAgent}
 import org.ml4ai.inference.VerboseRelation
 import org.ml4ai.mdp.WikiHopEnvironment
+import scala.util.Random
 
 /**
   * Base class for deterministic agents. Subclasses will chose actions with different criteria
   */
-abstract class DeterministicAgent extends BaseAgent{
+abstract class DeterministicAgent(implicit rng:Random) extends BaseAgent{
 
   /**
     * Tail recursive implementation of run episode

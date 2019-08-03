@@ -5,7 +5,9 @@ import org.ml4ai.inference.VerboseRelation
 import org.ml4ai.mdp.{Cascade, WikiHopEnvironment}
 import org.sarsamora.actions.Action
 
-class CascadeAgent extends DeterministicAgent {
+import scala.util.Random
+
+class CascadeAgent(implicit rng:Random) extends DeterministicAgent {
   /**
     * Selects an action from those available from the environment within runEpoch
     *

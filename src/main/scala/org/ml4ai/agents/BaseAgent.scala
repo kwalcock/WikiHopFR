@@ -12,9 +12,9 @@ import scala.util.Random
 /**
   * Base class to all of the agent implementations
   */
-abstract class BaseAgent {
+abstract class BaseAgent(implicit rnd:Random) {
 
-  protected lazy val rng:Random = buildRandom()
+//  protected lazy val rng:Random = buildRandom()
 
   /**
     * Selects an action from those available from the environment within runEpoch

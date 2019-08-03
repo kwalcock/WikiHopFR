@@ -9,7 +9,7 @@ import org.ml4ai.utils.buildRandom
 
 import scala.util.Random
 
-class EpGreedyPolicy(decay:Iterator[Double], network:DQN) extends Policy {
+class EpGreedyPolicy(decay:Iterator[Double], network:DQN)(implicit rng:Random) extends Policy {
 
   def argMax(values:Tensor):Seq[Int] = {
     val columns = values.toSeq().grouped(values.getD().rows().toInt)
@@ -26,8 +26,6 @@ class EpGreedyPolicy(decay:Iterator[Double], network:DQN) extends Policy {
         col.max
     }.toSeq
   }
-
-  private val rng:Random = buildRandom()
 
   override def selectAction(state: WikiHopState, candidateEntities:Seq[Set[String]]): Action = {
     val epsilon = decay.next()

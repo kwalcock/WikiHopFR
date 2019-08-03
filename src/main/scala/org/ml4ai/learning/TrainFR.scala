@@ -5,7 +5,7 @@ import edu.cmu.dynet.{ComputationGraph, Expression, FloatVector, ParameterCollec
 import org.ml4ai.{WHConfig, WikiHopInstance}
 import org.ml4ai.agents.{AgentObserver, EpGreedyPolicy, PolicyAgent}
 import org.ml4ai.mdp.{Exploitation, Exploration, ExplorationDouble, WikiHopEnvironment, WikiHopState}
-import org.ml4ai.utils.{TransitionMemory, WikiHopParser, buildRandom}
+import org.ml4ai.utils.{TransitionMemory, WikiHopParser, rng}
 import org.sarsamora.Decays
 import org.sarsamora.actions.Action
 import org.sarsamora.states.State
@@ -117,7 +117,6 @@ object TrainFR extends App with LazyLogging{
 
   // Initialize the optimizer
   val optimizer = new RMSPropTrainer(params, learningRate = .01f, rho = .99f)
-  implicit val rng = buildRandom()
 
   val policy = new EpGreedyPolicy(Decays.exponentialDecay(WHConfig.Training.Epsilon.upperBound, WHConfig.Training.Epsilon.lowerBound, numEpisodes*10, 0).iterator, network)
   val memory = new TransitionMemory[Transition](maxSize = WHConfig.Training.transitionMemorySize)

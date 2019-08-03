@@ -3,11 +3,7 @@ package org.ml4ai.utils
 import org.ml4ai.WikiHopInstance
 import org.ml4ai.ir.LuceneHelper
 
-import scala.util.Random
-
 object SupportDocs {
-
-  protected lazy val rng:Random = buildRandom()
 
   def localDocs(instance:WikiHopInstance):Set[String] = instance.supportDocs.map(md5Hash).toSet
 
