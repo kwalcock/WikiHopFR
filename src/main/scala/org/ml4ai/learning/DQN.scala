@@ -1,7 +1,8 @@
 package org.ml4ai.learning
 
 import edu.cmu.dynet.{ComputationGraph, Dim, Expression, FloatVector, ParameterCollection, Tensor}
-import org.ml4ai.mdp.WikiHopState
+import org.ml4ai.mdp.{Exploitation, Exploration, ExplorationDouble, WikiHopState}
+import org.sarsamora.actions.Action
 import org.sarsamora.states.State
 
 class DQN(params:ParameterCollection, embeddingsHelper: EmbeddingsHelper) {
@@ -69,5 +70,14 @@ class DQN(params:ParameterCollection, embeddingsHelper: EmbeddingsHelper) {
   private def aggregateEmbeddings(embs:Iterable[Expression]) = {
     // TODO: Add more nuance here
     Expression.average(embs.toSeq)
+  }
+}
+
+object DQN {
+  implicit def actionIndex(action:Action):Int = action match {
+    case _:Exploration => 0
+    case _:ExplorationDouble => 1
+    case _:Exploitation => 2
+    case _ => throw new IllegalStateException("Unsupported action type for RL")
   }
 }

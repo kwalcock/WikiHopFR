@@ -37,6 +37,7 @@ object TrainFR extends App with LazyLogging{
     // Renew the computational graph
     ComputationGraph.renew()
 
+    // Get the states from the batch and the entities associated to the action taken on that transition
     val states = miniBatch map { m => m.state}
     val selectedEntities = miniBatch map {
       tr =>
@@ -48,30 +49,57 @@ object TrainFR extends App with LazyLogging{
         }
     }
 
+    // Compute the state action values for all the actions of that (state, entities) argument
     val stateValues = network((states zip selectedEntities) map { case(s, (ea, eb)) => (s, ea, eb) })
 
-    val nextStates = miniBatch map { m => m.nextState }
+    // Fetch the observed reward of that transition
     val rewards = miniBatch map { _.reward }
 
-//    val nextActionVals = max(network(nextStates.toArray.toSeq).value())
+    // Fetch the resulting state of the transitions
+    val nextStates = miniBatch map { m => m.nextState }
+    val nextStateValues = // TODO figure out this correctly, this considers the state values of all the possible entity combinations, not just only of  the ones with the top entity
+      max{
+        network{
+          nextStates.flatMap{
+            ns =>
+              val entityPairs =
+                for {
+                  ea <- ns.candidateEntities
+                  eb <- ns.candidateEntities
+                } yield (ea, eb)
 
-//    val updates = (rewards zip nextActionVals) map { case (r, q) => r + GAMMA*q}
+              val ret = entityPairs.toSet.map{
+                ep:(Set[String], Set[String]) =>
+                  ep match {
+                    case (ea, eb) => (ns, ea, eb)
+                  }
+              }
+              ret
+          }
+        }.value()
+      }
 
-//    val actions = miniBatch.map(_.action)
+    val updates = (rewards zip nextStateValues) map { case (r, q) => r + GAMMA*q}
 
-//    val targetStateValuesData =
-//      for(((action, tv), u) <- (actions zip stateValues.value().toSeq().grouped(4).toSeq).zip(updates) ) yield {
-//        val ret = tv.toArray
-//        ret(0) = u.toFloat // TODO: Select the correct action
-//        ret
-//      }
-//
-//    val targetStateValues = Expression.input(stateValues.dim(), FloatVector.Seq2FloatVector(targetStateValuesData.flatten.toSeq))
-//
-//    val loss = mseLoss(stateValues, targetStateValues)
+    val actions = miniBatch.map(_.action)
 
-    //    ComputationGraph.forward(loss)
-//    ComputationGraph.backward(loss)
+    // Import this to make the code below more readable
+    import DQN.actionIndex
+
+    val targetStateValuesData =
+      // TODO Clean this, factor out the hard-coded num 4.
+      for(((action, tv), u) <- (actions zip stateValues.value().toSeq().grouped(4).toSeq).zip(updates) ) yield {
+        val ret = tv.toArray
+        ret(action) = u.toFloat // TODO: Select the correct action
+        ret
+      }
+
+    val targetStateValues = Expression.input(stateValues.dim(), FloatVector.Seq2FloatVector(targetStateValuesData.flatten.toSeq))
+
+    val loss = mseLoss(stateValues, targetStateValues)
+
+    //    ComputationGraph.forward(loss) // This might make the whole thing crash
+    ComputationGraph.backward(loss)
 
     optimizer.update()
   }
@@ -109,7 +137,7 @@ object TrainFR extends App with LazyLogging{
 
     override def actionTaken(action: Action, reward: Float, numDocsAdded: Int, env: WikiHopEnvironment): Unit = {
       assert(state.isDefined, "The state should be defined at this point")
-      val newState = env.observeState
+      val newState = env.observeState.asInstanceOf[WikiHopState]
       val transition = Transition(state.get, action, reward, newState)
       memory remember transition
       state = None

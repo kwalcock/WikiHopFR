@@ -7,7 +7,8 @@ case class WikiHopState(iterationNum:Int,
                         numNodes:Int,
                         numEdges:Int,
                         startEntity:Set[String],
-                        endEntity:Set[String]
+                        endEntity:Set[String],
+                        candidateEntities:Seq[Set[String]] // Store the candidate entities in the state for future usage
                        ) extends State {
   override def toFeatures: Map[String, Double] =
     Map(

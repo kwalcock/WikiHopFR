@@ -188,7 +188,7 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
     }
 
     // TODO Complete this definition with the rest of the features
-    WikiHopState(iterationNum, numNodes, numEdges, startTokens, endTokens)
+    WikiHopState(iterationNum, numNodes, numEdges, startTokens, endTokens, topEntities)
   }
 
   override def finishedEpisode: Boolean = {
