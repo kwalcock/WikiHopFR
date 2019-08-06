@@ -13,8 +13,10 @@ import org.ml4ai.utils.buildRandom
 import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 import WikiHopEnvironment.buildKnowledgeGraph
+import edu.cmu.dynet.{ComputationGraph, Expression}
 import org.clulab.embeddings.word2vec
 import org.clulab.embeddings.word2vec.Word2Vec
+import org.ml4ai.learning.EmbeddingsHelper
 
 class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Option[Set[String]] = None) extends Environment with LazyLogging {
 
@@ -130,6 +132,7 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
     */
   var lastConcreteAction:Option[Action] = None
   var numDocumentsAdded:Int = 0
+  var entitySelectionList:List[(Set[String], Set[String])] = Nil
 
   override def execute(action: Action, persist: Boolean): Double = {
     // Increment the iteration counter
@@ -151,6 +154,19 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
       case a:Action =>
         (a, LuceneHelper.retrieveDocumentNames(a, instanceToFilter = documentUniverse))
     }
+
+    // Keep track of the entities chosen for the action
+    val chosenEntities =
+      finalAction match {
+        case Exploitation(ea, eb) => (ea, eb)
+        case ExplorationDouble(ea, eb) => (ea, eb)
+        case Exploration(e) => (e, e)
+        case _ =>
+          throw new UnsupportedOperationException("Invalid action here")
+      }
+
+    // Store them
+    entitySelectionList = chosenEntities::entitySelectionList
 
     lastConcreteAction = Some(finalAction)
     // Generate new KG from the documents
@@ -177,8 +193,7 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
   }
 
 
-  override def observeState: State = {
-
+  def observeState(implicit eh:EmbeddingsHelper):WikiHopState = {
     val (numNodes, numEdges) = knowledgeGraph match {
       case Some(kg) =>
         (kg.entities.size, kg.edges.size)
@@ -187,7 +202,20 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
     }
 
     // TODO Complete this definition with the rest of the features
-    WikiHopState(iterationNum, numNodes, numEdges, startTokens, endTokens, topEntities)
+    WikiHopState(iterationNum, numNodes, numEdges, startTokens, endTokens, Some(topEntities))
+  }
+
+  // TODO Deprecate this
+  override def observeState: State = {
+    val (numNodes, numEdges) = knowledgeGraph match {
+      case Some(kg) =>
+        (kg.entities.size, kg.edges.size)
+      case None =>
+        (0, 0)
+    }
+
+    // TODO Complete this definition with the rest of the features
+    WikiHopState(iterationNum, numNodes, numEdges, startTokens, endTokens, None)
   }
 
   override def finishedEpisode: Boolean = {
@@ -232,10 +260,54 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
     case None => Map.empty
   }
 
+
+  private def distance(a:Set[String], b:Set[String], helper:EmbeddingsHelper):Float = {
+    val eA = helper.lookup(a).toSeq
+    val eB = helper.lookup(b).toSeq
+
+    ComputationGraph.renew()
+
+    val averageA = Expression.average(eA:_*)
+    val averageB = Expression.average(eB:_*)
+
+    Expression.l2Norm(averageA - averageB).value().toFloat()
+  }
+
   /**
     * @return top entities to be considered as target of an action
     */
-  def topEntities:Seq[Set[String]] = ??? // TODO: Implement by euclidean distance of their embeddings
+  def topEntities(implicit helper:EmbeddingsHelper):Seq[Set[String]] = {
+    // Fetch the last set of entities chosen
+    entitySelectionList match {
+      // If there are no entities selected yet, return the end points
+      case Nil =>
+        Seq(this.startTokens, this.endTokens)
+      case (lastA, lastB)::tail =>
+        // Pre-compute a set for efficiency
+        val previouslyChosen = entitySelectionList.toSet
+        // Get all the possible pairs to consider and discard the already chosen
+        val newPairs =
+          for{
+            candidate <- knowledgeGraph.get.entities
+          } yield { Seq((lastA, candidate), (lastB, candidate))}
+
+        // TODO: Clean this code for legibility
+        // TODO: Parameterize the argument to take
+        newPairs.toSeq.flatten.withFilter{
+          case (a, b) =>
+            if(a == b)
+              false
+            else if(previouslyChosen contains ((a, b)))
+              false
+            else if(previouslyChosen contains ((b, a)))
+              false
+            else
+              true
+        }.map{
+          case (a, b) => (a, b, distance(a, b, helper))
+        }.sortBy(_._3).take(10).map(_._2)
+    }
+  }
 
 }
 

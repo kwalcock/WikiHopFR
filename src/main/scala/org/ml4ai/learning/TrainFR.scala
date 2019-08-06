@@ -64,8 +64,8 @@ object TrainFR extends App with LazyLogging{
             ns =>
               val entityPairs =
                 for {
-                  ea <- ns.candidateEntities
-                  eb <- ns.candidateEntities
+                  ea <- ns.candidateEntities.get
+                  eb <- ns.candidateEntities.get
                 } yield (ea, eb)
 
               val ret = entityPairs.toSet.map{
@@ -112,7 +112,7 @@ object TrainFR extends App with LazyLogging{
   val targetUpdate = WHConfig.Training.targetUpdate
 
   val params = new ParameterCollection()
-  val eh = new EmbeddingsHelper(params)
+  implicit val eh: EmbeddingsHelper = new EmbeddingsHelper(params)
   val network = new DQN(params, eh)
 
   // Initialize the optimizer

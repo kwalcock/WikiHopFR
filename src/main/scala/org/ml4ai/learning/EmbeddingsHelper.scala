@@ -68,4 +68,8 @@ class EmbeddingsHelper(pc:ParameterCollection) extends LazyLogging {
         Expression.lookup(missingEmbeddings, pretrainedIndex(Word2Vec.sanitizeWord(term)))
       }
   }
+
+  def distance(entityA:Set[String], entityB:Set[String]) = {
+
+  }
 }
