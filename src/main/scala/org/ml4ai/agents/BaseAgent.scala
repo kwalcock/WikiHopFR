@@ -36,7 +36,6 @@ abstract class BaseAgent(implicit rnd:Random) {
     */
   def runEpisode(instance:WikiHopInstance, monitor:Option[AgentObserver] = None):Iterable[Seq[VerboseRelation]] = {
     // Generate the end points
-    // TODO: Verify this is correct
     val source: String = instance.query.split(" ").last
     val destination: String = instance.answer match {
       case Some(ans) => ans

@@ -105,8 +105,7 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
         })
       ).size
 
-    // TODO: make this parameterizable
-    val livingReward = 0.5
+    val livingReward = WHConfig.Environment.livingReward
 
     val informationRatio = if(newPapers > 0) newRelations / newPapers else 0
 

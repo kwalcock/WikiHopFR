@@ -48,6 +48,7 @@ object WHConfig {
     val documentUniverse: String = f.getString("documentUniverse")
     val successReward: Double = f.getDouble("successReward")
     val failureReward: Double = f.getDouble("failureReward")
+    val livingReward: Double = f.getDouble("livingReward")
     val cacheAnnotations: Boolean = f.getBoolean("cacheAnnotations")
   }
 

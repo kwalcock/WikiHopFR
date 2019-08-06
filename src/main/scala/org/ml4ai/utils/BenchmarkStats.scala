@@ -95,8 +95,8 @@ class BenchmarkStats(data:Iterable[StatsDatum])  extends Serializable {
                       "id" -> d.instanceId,
                       "success" -> (if (d.paths.nonEmpty) true else false),
                       "paths" -> d.paths,
-                      "iterations" -> d.observer.iterations.get, // TODO fix it
-                      "papersRead" -> d.observer.papersRead.get, // TODO fix it
+                      "iterations" -> d.observer.iterations.get,
+                      "papersRead" -> d.observer.papersRead.get,
                       "actions" -> d.observer.actionDistribution.toMap,
                       "errors" -> (d.observer.errors map {
                         ex =>
