@@ -27,8 +27,11 @@ class EpGreedyPolicy(decay:Iterator[Double], network:DQN)(implicit rng:Random) e
     }.toSeq
   }
 
-  override def selectAction(state: WikiHopState, candidateEntities:Seq[Set[String]]): Action = {
+  override def selectAction(state: WikiHopState): Action = {
     val epsilon = decay.next()
+
+    val candidateEntities:Seq[Set[String]] = state.candidateEntities.get
+
     if(rng.nextFloat() <= epsilon)
       RandomAction
     else{

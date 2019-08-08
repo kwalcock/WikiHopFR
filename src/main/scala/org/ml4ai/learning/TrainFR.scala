@@ -1,7 +1,7 @@
 package org.ml4ai.learning
 
 import com.typesafe.scalalogging.LazyLogging
-import edu.cmu.dynet.{ComputationGraph, Expression, FloatVector, ParameterCollection, RMSPropTrainer, Trainer}
+import edu.cmu.dynet.{ComputationGraph, Expression, FloatVector, Initialize, ParameterCollection, RMSPropTrainer, Trainer}
 import org.ml4ai.{WHConfig, WikiHopInstance}
 import org.ml4ai.agents.{AgentObserver, EpGreedyPolicy, PolicyAgent}
 import org.ml4ai.mdp.{Exploitation, Exploration, ExplorationDouble, WikiHopEnvironment, WikiHopState}
@@ -87,8 +87,8 @@ object TrainFR extends App with LazyLogging{
     import DQN.actionIndex
 
     val targetStateValuesData =
-      // TODO Clean this, factor out the hard-coded num 4.
-      for(((action, tv), u) <- (actions zip stateValues.value().toSeq().grouped(4).toSeq).zip(updates) ) yield {
+      // TODO Clean this, factor out the hard-coded num 3.
+      for(((action, tv), u) <- (actions zip stateValues.value().toSeq().grouped(3).toSeq).zip(updates) ) yield {
         val ret = tv.toArray
         ret(action) = u.toFloat // TODO: Select the correct action
         ret
@@ -111,6 +111,7 @@ object TrainFR extends App with LazyLogging{
   val numEpisodes = WHConfig.Training.episodes
   val targetUpdate = WHConfig.Training.targetUpdate
 
+  Initialize.initialize()
   val params = new ParameterCollection()
   implicit val eh: EmbeddingsHelper = new EmbeddingsHelper(params)
   val network = new DQN(params, eh)
@@ -121,6 +122,7 @@ object TrainFR extends App with LazyLogging{
   val policy = new EpGreedyPolicy(Decays.exponentialDecay(WHConfig.Training.Epsilon.upperBound, WHConfig.Training.Epsilon.lowerBound, numEpisodes*10, 0).iterator, network)
   val memory = new TransitionMemory[Transition](maxSize = WHConfig.Training.transitionMemorySize)
 
+  // TODO: Implement this
   val instance = selectSmall(instances)
 
   val trainingObserver: AgentObserver = new AgentObserver {
@@ -134,7 +136,10 @@ object TrainFR extends App with LazyLogging{
       state = Some(env.observeState.asInstanceOf[WikiHopState])
     }
 
-    override def actionTaken(action: Action, reward: Float, numDocsAdded: Int, env: WikiHopEnvironment): Unit = {
+    override def actionTaken(action: Action, reward: Float, numDocsAdded: Int, env: WikiHopEnvironment): Unit = ()
+
+
+    override def concreteActionTaken(action: Action, reward: Float, numDocsAdded: Int, env: WikiHopEnvironment): Unit = {
       assert(state.isDefined, "The state should be defined at this point")
       val newState = env.observeState.asInstanceOf[WikiHopState]
       val transition = Transition(state.get, action, reward, newState)
@@ -142,10 +147,7 @@ object TrainFR extends App with LazyLogging{
       state = None
     }
 
-
-    override def concreteActionTaken(action: Action, reward: Float, numDocsAdded: Int, env: WikiHopEnvironment): Unit = {}
-
-    override def endedEpisode(env: WikiHopEnvironment): Unit = {}
+    override def endedEpisode(env: WikiHopEnvironment): Unit = ()
 
     override def registerError(throwable: Throwable): Unit = {
       logger.error(throwable.getMessage)
@@ -168,7 +170,7 @@ object TrainFR extends App with LazyLogging{
         val successRate = successes / targetUpdate.toFloat
         logger.info(s"Success rate of $successRate for the last 100 episodes")
         successes = 0
-        // TODO call the update procedure
+        updateParameters(network, optimizer)
       }
     }
   }

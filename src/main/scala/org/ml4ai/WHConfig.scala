@@ -50,6 +50,7 @@ object WHConfig {
     val failureReward: Double = f.getDouble("failureReward")
     val livingReward: Double = f.getDouble("livingReward")
     val cacheAnnotations: Boolean = f.getBoolean("cacheAnnotations")
+    val topEntitiesNum: Int = f.getInt("topEntitiesNum")
   }
 
   object Benchmark {
@@ -77,7 +78,7 @@ object WHConfig {
     val transitionMemorySize: Int = f.getInt("transitionMemorySize")
 
     object Epsilon {
-      private val g = config.getConfig("epsilon")
+      private val g = f.getConfig("epsilon")
 
       val upperBound:Double = g.getDouble("upperBound")
       val lowerBound:Double = g.getDouble("lowerBound")

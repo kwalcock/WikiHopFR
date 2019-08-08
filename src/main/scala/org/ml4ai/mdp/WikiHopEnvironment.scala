@@ -267,6 +267,7 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
 
     ComputationGraph.renew()
 
+    // TODO: Fix Segfault here
     val averageA = Expression.average(eA:_*)
     val averageB = Expression.average(eB:_*)
 
@@ -292,7 +293,6 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
           } yield { Seq((lastA, candidate), (lastB, candidate))}
 
         // TODO: Clean this code for legibility
-        // TODO: Parameterize the argument to take
         newPairs.toSeq.flatten.withFilter{
           case (a, b) =>
             if(a == b)
@@ -305,7 +305,7 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
               true
         }.map{
           case (a, b) => (a, b, distance(a, b, helper))
-        }.sortBy(_._3).take(10).map(_._2)
+        }.sortBy(_._3).take(WHConfig.Environment.topEntitiesNum).map(_._2)
     }
   }
 

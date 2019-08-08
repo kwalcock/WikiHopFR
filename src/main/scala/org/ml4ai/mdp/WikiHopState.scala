@@ -17,3 +17,7 @@ case class WikiHopState(iterationNum:Int,
       "numEdges" -> numEdges,
     )
 }
+
+object WikiHopState{
+  val numFeatures:Int = 3
+}

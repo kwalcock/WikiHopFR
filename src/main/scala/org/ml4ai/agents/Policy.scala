@@ -5,5 +5,5 @@ import org.sarsamora.actions.Action
 import org.sarsamora.states.State
 
 abstract class Policy  {
-  def selectAction(state:WikiHopState, candidateEntities:Seq[Set[String]]):Action
+  def selectAction(state:WikiHopState):Action
 }

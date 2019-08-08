@@ -15,7 +15,7 @@ class PolicyAgent(policy:EpGreedyPolicy)(implicit rng:Random, embeddingsHelper: 
   override protected def selectAction(environment: WikiHopEnvironment): Action = {
     // This may seem redundant, however, an agent may not use a policy to select an action. The redundancy is only
     // for the specific case of the policy agent.
-    policy.selectAction(environment.observeState.asInstanceOf[WikiHopState], environment.topEntities)
+    policy.selectAction(environment.observeState.asInstanceOf[WikiHopState])
   }
 
 
