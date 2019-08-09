@@ -5,7 +5,7 @@ import edu.cmu.dynet.{Dim, Expression, FloatVector, LookupParameter, ParameterCo
 import org.clulab.embeddings.word2vec.Word2Vec
 import org.ml4ai.WHConfig.Files.glovePath
 import org.ml4ai.mdp.WikiHopEnvironment
-import org.ml4ai.utils.WikiHopParser
+import org.ml4ai.utils.{SupportDocs, WikiHopParser}
 
 class EmbeddingsHelper(pc:ParameterCollection) extends LazyLogging {
 
@@ -18,29 +18,32 @@ class EmbeddingsHelper(pc:ParameterCollection) extends LazyLogging {
     val instances = WikiHopParser.trainingInstances
 
     // Extract all the entities from all instances
-    val allEntities = instances flatMap {
-      instance =>
-        // Include the end points of the search
-        val (start, end) = (instance.query.split(" ").drop(1).toSet, instance.answer.get.split(" ").toSet)
-
-        // Instantiate an environment to fetch the entities
-        val env = new WikiHopEnvironment(instance.query, instance.answer.get, Some(instance.supportDocs.toSet))
-
-        // Get the entities from the full knowledge graph
-        val entities = env.entityDegrees.keySet.flatten
-
-        // Return the union of the endpoints and the KG entities
-        start union end union entities
-    }
-
-    val sanitizedTerms = allEntities.map(w => Word2Vec.sanitizeWord(w)).toSet
+//    val allEntities = instances flatMap {
+//      instance =>
+//        // Include the end points of the search
+//        val (start, end) = (instance.query.split(" ").drop(1).toSet, instance.answer.get.split(" ").toSet)
+//
+//        // Instantiate an environment to fetch the entities
+//
+//        val env = new WikiHopEnvironment(instance.query, instance.answer.get, Some(SupportDocs.localDocs(instance)))
+//        env.readDocumentUniverse()
+//        // Get the entities from the full knowledge graph
+//        val entities = env.entities.flatten//env.entityDegrees.keySet.flatten
+//
+//        // Return the union of the endpoints and the KG entities
+//        start union end union entities
+//    }
+//
+//    val sanitizedTerms = allEntities.map(w => Word2Vec.sanitizeWord(w)).toSet
 
     // Sanitize them and use them as a filter to load the embeddings
-    val embeddings = new Word2Vec(glovePath, Some(sanitizedTerms))
+//    val embeddings = new Word2Vec(glovePath, Some(sanitizedTerms))
+    val embeddings = new Word2Vec(glovePath)
 
     val existingTerms = embeddings.matrix.keySet
 
-    val missingTerms = sanitizedTerms diff existingTerms
+//    val missingTerms = (sanitizedTerms diff existingTerms) union Set("xnumx")
+    val missingTerms = (Set("OOV") diff existingTerms) union Set("xnumx")
 
     (embeddings, missingTerms)
   }
@@ -60,12 +63,14 @@ class EmbeddingsHelper(pc:ParameterCollection) extends LazyLogging {
 
   def lookup(entity:Set[String]):Iterable[Expression] = entity map {
     term =>
-      if(pretrainedIndex contains term) {
+      val sanitizedTerm = Word2Vec.sanitizeWord(term)
+      if(pretrainedIndex contains sanitizedTerm) {
         // Fetch from the pretrained embeddings
-        Expression.lookup(pretrainedEmbeddings, pretrainedIndex(Word2Vec.sanitizeWord(term)))
+        Expression.lookup(pretrainedEmbeddings, pretrainedIndex(sanitizedTerm))
       } else {
         // Fetch from the missing embeddings
-        Expression.lookup(missingEmbeddings, pretrainedIndex(Word2Vec.sanitizeWord(term)))
+//        Expression.lookup(missingEmbeddings, missingIndex(Word2Vec.sanitizeWord(term)))
+        Expression.lookup(missingEmbeddings, missingIndex("OOV"))
       }
   }
 }

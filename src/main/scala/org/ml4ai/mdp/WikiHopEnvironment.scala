@@ -260,12 +260,22 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
     case None => Map.empty
   }
 
+  def entities:Set[Set[String]] = knowledgeGraph match {
+    case Some(kg) => kg.entities.toSet
+    case None => Set.empty
+  }
+
+  def readDocumentUniverse(): Unit = documentUniverse match {
+    case None => ()
+    case Some(docs) =>
+      this.knowledgeGraph = Some(buildKnowledgeGraph(docs))
+  }
 
   private def distance(a:Set[String], b:Set[String], helper:EmbeddingsHelper):Float = {
+    ComputationGraph.renew()
+
     val eA = helper.lookup(a).toSeq
     val eB = helper.lookup(b).toSeq
-
-    ComputationGraph.renew()
 
     // TODO: Fix Segfault here
     val averageA = Expression.average(eA:_*)
