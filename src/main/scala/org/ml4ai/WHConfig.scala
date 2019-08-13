@@ -39,6 +39,7 @@ object WHConfig {
     val binaryPath: String = f.getString("binaryPath")
     val threads: Int = f.getInt("threads")
     val embeddingsFile: String = f.getString("embeddingsFile")
+    val vocabularyFile: String = f.getString("vocabularyFile")
   }
 
   object Environment {
