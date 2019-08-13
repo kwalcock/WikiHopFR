@@ -3,9 +3,12 @@ package org.ml4ai.learning
 import com.typesafe.scalalogging.LazyLogging
 import edu.cmu.dynet.{Dim, Expression, FloatVector, LookupParameter, ParameterCollection, ParameterInit}
 import org.clulab.embeddings.word2vec.Word2Vec
+import org.ml4ai.WHConfig
 import org.ml4ai.WHConfig.Files.glovePath
-import org.ml4ai.mdp.WikiHopEnvironment
 import org.ml4ai.utils.{SupportDocs, WikiHopParser}
+import org.ml4ai.utils._
+
+import scala.io.Source
 
 class EmbeddingsHelper(pc:ParameterCollection) extends LazyLogging {
 
@@ -17,33 +20,18 @@ class EmbeddingsHelper(pc:ParameterCollection) extends LazyLogging {
     // Instantiate all the environments and pull the entities
     val instances = WikiHopParser.trainingInstances
 
-    // Extract all the entities from all instances
-//    val allEntities = instances flatMap {
-//      instance =>
-//        // Include the end points of the search
-//        val (start, end) = (instance.query.split(" ").drop(1).toSet, instance.answer.get.split(" ").toSet)
-//
-//        // Instantiate an environment to fetch the entities
-//
-//        val env = new WikiHopEnvironment(instance.query, instance.answer.get, Some(SupportDocs.localDocs(instance)))
-//        env.readDocumentUniverse()
-//        // Get the entities from the full knowledge graph
-//        val entities = env.entities.flatten//env.entityDegrees.keySet.flatten
-//
-//        // Return the union of the endpoints and the KG entities
-//        start union end union entities
-//    }
-//
-//    val sanitizedTerms = allEntities.map(w => Word2Vec.sanitizeWord(w)).toSet
+
+    val sanitizedTerms = using(Source.fromFile(WHConfig.Embeddings.vocabularyFile)){
+      source =>
+        source.getLines().toSet
+    }
 
     // Sanitize them and use them as a filter to load the embeddings
-//    val embeddings = new Word2Vec(glovePath, Some(sanitizedTerms))
-    val embeddings = new Word2Vec(glovePath)
+    val embeddings = new Word2Vec(glovePath, Some(sanitizedTerms))
 
     val existingTerms = embeddings.matrix.keySet
 
-//    val missingTerms = (sanitizedTerms diff existingTerms) union Set("xnumx")
-    val missingTerms = (Set("OOV") diff existingTerms) union Set("xnumx")
+    val missingTerms = (sanitizedTerms diff existingTerms) union Set("xnumx", "OOV")
 
     (embeddings, missingTerms)
   }
