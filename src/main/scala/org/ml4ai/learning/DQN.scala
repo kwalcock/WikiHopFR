@@ -13,8 +13,8 @@ class DQN(params:ParameterCollection, embeddingsHelper: EmbeddingsHelper) {
 
   private val pW = params.addParameters(Dim(10, featureVectorSize))
   private val pb = params.addParameters(Dim(10))
-  private val pX = params.addParameters(Dim(3, 10))
-  private val pc = params.addParameters(Dim(3))
+  private val pX = params.addParameters(Dim(2, 10))
+  private val pc = params.addParameters(Dim(2))
 
   ComputationGraph.renew()
 

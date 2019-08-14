@@ -1,6 +1,6 @@
 package org.ml4ai.agents
 
-import edu.cmu.dynet.Tensor
+import edu.cmu.dynet.{ComputationGraph, Tensor}
 import org.ml4ai.learning.DQN
 import org.ml4ai.mdp.{RandomAction, WikiHopState}
 import org.sarsamora.actions.Action
@@ -29,6 +29,8 @@ class EpGreedyPolicy(decay:Iterator[Double], network:DQN)(implicit rng:Random) e
 
   override def selectAction(state: WikiHopState): Action = {
     val epsilon = decay.next()
+
+    ComputationGraph.renew()
 
     val candidateEntities:Seq[Set[String]] = state.candidateEntities.get
 

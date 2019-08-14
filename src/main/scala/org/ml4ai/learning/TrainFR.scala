@@ -87,8 +87,8 @@ object TrainFR extends App with LazyLogging{
     import DQN.actionIndex
 
     val targetStateValuesData =
-      // TODO Clean this, factor out the hard-coded num 3.
-      for(((action, tv), u) <- (actions zip stateValues.value().toSeq().grouped(3).toSeq).zip(updates) ) yield {
+      // TODO Clean this, factor out the hard-coded num 2.
+      for(((action, tv), u) <- (actions zip stateValues.value().toSeq().grouped(2).toSeq).zip(updates) ) yield {
         val ret = tv.toArray
         ret(action) = u.toFloat // TODO: Select the correct action
         ret

@@ -277,7 +277,6 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
     val eA = helper.lookup(a).toSeq
     val eB = helper.lookup(b).toSeq
 
-    // TODO: Fix Segfault here
     val averageA = Expression.average(eA:_*)
     val averageB = Expression.average(eB:_*)
 

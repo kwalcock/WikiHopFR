@@ -6,15 +6,15 @@ package object mdp {
 
   def actionBuilder(actionIx:Int, entityA:Set[String], entityB:Set[String]):Action = {
     if(actionIx == 0){
-      assert(entityA == entityB, "Exploration must use the same endpoints")
-      Exploration(entityA)
+      if(entityA == entityB)
+        Exploration(entityA)
+      else
+        ExplorationDouble(entityA, entityB)
     }
     else{
-      assert(entityA == entityB, "The action must use the different endpoints")
+//      assert(entityA == entityB, "The action must use the different endpoints")
       actionIx match {
         case 1 =>
-          ExplorationDouble(entityA, entityB)
-        case 2 =>
           Exploitation(entityA, entityB)
         case ix:Int =>
           throw new NotImplementedError(s"Action with code $ix is not valid")
