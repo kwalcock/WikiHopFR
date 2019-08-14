@@ -1,7 +1,6 @@
 package org.ml4ai.learning
 
 import com.typesafe.scalalogging.LazyLogging
-import edu.cmu.dynet.{ComputationGraph, Expression, FloatVector, Initialize, ParameterCollection, RMSPropTrainer, Trainer}
 import org.ml4ai.{WHConfig, WikiHopInstance}
 import org.ml4ai.agents.{AgentObserver, EpGreedyPolicy, PolicyAgent}
 import org.ml4ai.mdp.{Exploitation, Exploration, ExplorationDouble, WikiHopEnvironment, WikiHopState}
@@ -27,15 +26,13 @@ object TrainFR extends App with LazyLogging{
     * Updates the network with a minibatch
     * @param network
     */
-  def updateParameters(network:DQN, trainer:Trainer)(implicit rng:Random):Unit = {
+  def updateParameters(network:DQN)(implicit rng:Random):Unit = {
     // Sample a mini batch
     val miniBatch = memory.sample(1000)
 
     // TODO: Refactor this parameter
     val GAMMA = .9
 
-    // Renew the computational graph
-    ComputationGraph.renew()
 
     // Get the states from the batch and the entities associated to the action taken on that transition
     val states = miniBatch map { m => m.state}
@@ -57,51 +54,53 @@ object TrainFR extends App with LazyLogging{
 
     // Fetch the resulting state of the transitions
     val nextStates = miniBatch map { m => m.nextState }
-    val nextStateValues = // TODO figure out this correctly, this considers the state values of all the possible entity combinations, not just only of  the ones with the top entity
-      max{
-        network{
-          nextStates.flatMap{
-            ns =>
-              val entityPairs =
-                for {
-                  ea <- ns.candidateEntities.get
-                  eb <- ns.candidateEntities.get
-                } yield (ea, eb)
+    val nextStateValues = ??? // TODO figure out this correctly, this considers the state values of all the possible entity combinations, not just only of  the ones with the top entity
+//      max{
+//        network{
+//          nextStates.flatMap{
+//            ns =>
+//              val entityPairs =
+//                for {
+//                  ea <- ns.candidateEntities.get
+//                  eb <- ns.candidateEntities.get
+//                } yield (ea, eb)
+//
+//              val ret = entityPairs.toSet.map{
+//                ep:(Set[String], Set[String]) =>
+//                  ep match {
+//                    case (ea, eb) => (ns, ea, eb)
+//                  }
+//              }
+//              ret
+//          }
+//        }.value()
+//      }
 
-              val ret = entityPairs.toSet.map{
-                ep:(Set[String], Set[String]) =>
-                  ep match {
-                    case (ea, eb) => (ns, ea, eb)
-                  }
-              }
-              ret
-          }
-        }.value()
-      }
+//    val updates = (rewards zip nextStateValues) map { case (r, q) => r + GAMMA*q}
+//
+//    val actions = miniBatch.map(_.action)
+//
+//    // Import this to make the code below more readable
+//    import DQN.actionIndex
+//
+//    val targetStateValuesData =
+//      // TODO Clean this, factor out the hard-coded num 2.
+//      for(((action, tv), u) <- (actions zip stateValues.value().toSeq().grouped(2).toSeq).zip(updates) ) yield {
+//        val ret = tv.toArray
+//        ret(action) = u.toFloat // TODO: Select the correct action
+//        ret
+//      }
 
-    val updates = (rewards zip nextStateValues) map { case (r, q) => r + GAMMA*q}
+//    val targetStateValues = Expression.input(stateValues.dim(), FloatVector.Seq2FloatVector(targetStateValuesData.flatten.toSeq))
 
-    val actions = miniBatch.map(_.action)
+//    val loss = mseLoss(stateValues, targetStateValues)
 
-    // Import this to make the code below more readable
-    import DQN.actionIndex
 
-    val targetStateValuesData =
-      // TODO Clean this, factor out the hard-coded num 2.
-      for(((action, tv), u) <- (actions zip stateValues.value().toSeq().grouped(2).toSeq).zip(updates) ) yield {
-        val ret = tv.toArray
-        ret(action) = u.toFloat // TODO: Select the correct action
-        ret
-      }
+//    ComputationGraph.backward(loss)
 
-    val targetStateValues = Expression.input(stateValues.dim(), FloatVector.Seq2FloatVector(targetStateValuesData.flatten.toSeq))
+//    optimizer.update()
 
-    val loss = mseLoss(stateValues, targetStateValues)
-
-    //    ComputationGraph.forward(loss) // This might make the whole thing crash
-    ComputationGraph.backward(loss)
-
-    optimizer.update()
+    // TODO: Implement this in pytorch
   }
 
 
@@ -111,13 +110,8 @@ object TrainFR extends App with LazyLogging{
   val numEpisodes = WHConfig.Training.episodes
   val targetUpdate = WHConfig.Training.targetUpdate
 
-  Initialize.initialize()
-  val params = new ParameterCollection()
-  implicit val eh: EmbeddingsHelper = new EmbeddingsHelper(params)
-  val network = new DQN(params, eh)
 
-  // Initialize the optimizer
-  val optimizer = new RMSPropTrainer(params, learningRate = .01f, rho = .99f)
+  val network = new DQN()
 
   val policy = new EpGreedyPolicy(Decays.exponentialDecay(WHConfig.Training.Epsilon.upperBound, WHConfig.Training.Epsilon.lowerBound, numEpisodes*10, 0).iterator, network)
   val memory = new TransitionMemory[Transition](maxSize = WHConfig.Training.transitionMemorySize)
@@ -170,7 +164,7 @@ object TrainFR extends App with LazyLogging{
         val successRate = successes / targetUpdate.toFloat
         logger.info(s"Success rate of $successRate for the last 100 episodes")
         successes = 0
-        updateParameters(network, optimizer)
+        updateParameters(network)
       }
     }
   }

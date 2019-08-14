@@ -13,10 +13,8 @@ import org.ml4ai.utils.buildRandom
 import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 import WikiHopEnvironment.buildKnowledgeGraph
-import edu.cmu.dynet.{ComputationGraph, Expression}
 import org.clulab.embeddings.word2vec
 import org.clulab.embeddings.word2vec.Word2Vec
-import org.ml4ai.learning.EmbeddingsHelper
 
 class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Option[Set[String]] = None) extends Environment with LazyLogging {
 
@@ -193,7 +191,7 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
   }
 
 
-  def observeState(implicit eh:EmbeddingsHelper):WikiHopState = {
+  def observeState:WikiHopState = {
     val (numNodes, numEdges) = knowledgeGraph match {
       case Some(kg) =>
         (kg.entities.size, kg.edges.size)
@@ -205,18 +203,18 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
     WikiHopState(iterationNum, numNodes, numEdges, startTokens, endTokens, Some(topEntities))
   }
 
-  // TODO Deprecate this
-  override def observeState: State = {
-    val (numNodes, numEdges) = knowledgeGraph match {
-      case Some(kg) =>
-        (kg.entities.size, kg.edges.size)
-      case None =>
-        (0, 0)
-    }
-
-    // TODO Complete this definition with the rest of the features
-    WikiHopState(iterationNum, numNodes, numEdges, startTokens, endTokens, None)
-  }
+//  // TODO Deprecate this
+//  override def observeState: State = {
+//    val (numNodes, numEdges) = knowledgeGraph match {
+//      case Some(kg) =>
+//        (kg.entities.size, kg.edges.size)
+//      case None =>
+//        (0, 0)
+//    }
+//
+//    // TODO Complete this definition with the rest of the features
+//    WikiHopState(iterationNum, numNodes, numEdges, startTokens, endTokens, None)
+//  }
 
   override def finishedEpisode: Boolean = {
     if(iterationNum >= maxIterations)
@@ -271,22 +269,24 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
       this.knowledgeGraph = Some(buildKnowledgeGraph(docs))
   }
 
-  private def distance(a:Set[String], b:Set[String], helper:EmbeddingsHelper):Float = {
-    ComputationGraph.renew()
-
-    val eA = helper.lookup(a).toSeq
-    val eB = helper.lookup(b).toSeq
-
-    val averageA = Expression.average(eA:_*)
-    val averageB = Expression.average(eB:_*)
-
-    Expression.l2Norm(averageA - averageB).value().toFloat()
+  private def distance(a:Set[String], b:Set[String]):Float = {
+//    ComputationGraph.renew()
+//
+//    val eA = helper.lookup(a).toSeq
+//    val eB = helper.lookup(b).toSeq
+//
+//    val averageA = Expression.average(eA:_*)
+//    val averageB = Expression.average(eB:_*)
+//
+//    Expression.l2Norm(averageA - averageB).value().toFloat()
+    // TODO implement distance in pytorch
+    ???
   }
 
   /**
     * @return top entities to be considered as target of an action
     */
-  def topEntities(implicit helper:EmbeddingsHelper):Seq[Set[String]] = {
+  def topEntities:Seq[Set[String]] = {
     // Fetch the last set of entities chosen
     entitySelectionList match {
       // If there are no entities selected yet, return the end points
@@ -313,7 +313,7 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
             else
               true
         }.map{
-          case (a, b) => (a, b, distance(a, b, helper))
+          case (a, b) => (a, b, distance(a, b))
         }.sortBy(_._3).take(WHConfig.Environment.topEntitiesNum).map(_._2)
     }
   }
