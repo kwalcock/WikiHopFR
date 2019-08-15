@@ -1,10 +1,52 @@
 package org.ml4ai.learning
 
+import com.typesafe.scalalogging.LazyLogging
+import org.apache.http.client.methods.HttpPut
+import org.apache.http.entity.{ContentType, StringEntity}
 import org.ml4ai.mdp.{Exploitation, Exploration, ExplorationDouble, WikiHopState}
 import org.sarsamora.actions.Action
 import org.sarsamora.states.State
+import org.json4s.JsonDSL._
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
+import org.apache.http.impl.client.HttpClients
+import org.ml4ai.utils._
 
-class DQN() {
+import scala.io.Source
+import scala.util.{Failure, Success, Try}
+
+
+class DQN() extends LazyLogging{
+
+  private val httpClient = HttpClients.createDefault
+
+  private def httpPut(method:String, data:String):String = {
+    val request = new HttpPut(s"http://localhost:5000/$method")
+    val content = new StringEntity(data, ContentType.create("text/plain", "UTF-8"))
+
+    request.setEntity(content)
+
+    val response = httpClient.execute(request)
+
+    Try {
+      val entity = response.getEntity
+      if (entity != null) {
+        using(entity.getContent){
+          stream =>
+            Source.fromInputStream(stream).mkString
+        }
+      }
+      else
+        ""
+    } match {
+      case Success(content) =>
+        content
+      case Failure(exception) =>
+        logger.error(exception.getMessage)
+        ""
+    }
+
+  }
 
   // TODO: Reimplement this in pytorch
 
@@ -40,7 +82,26 @@ class DQN() {
 //    val c = Expression.parameter(pc)
 //
 //    X * Expression.tanh(W*inputMatrix + b) + c
+
+    val payload =
+      compact {
+        render {
+          input map {
+            case (features, entityA, entityB) =>
+              ("features" -> features.toFeatures) ~
+                ("A" -> entityA) ~
+                ("B" -> entityB)
+          }
+        }
+      }
+
+
+    val response = httpPut("forward", payload)
+
+    response
   }
+
+
 
 }
 

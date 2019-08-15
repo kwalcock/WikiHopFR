@@ -280,7 +280,7 @@ class WikiHopEnvironment(val start:String, val end:String, documentUniverse:Opti
 //
 //    Expression.l2Norm(averageA - averageB).value().toFloat()
     // TODO implement distance in pytorch
-    ???
+    1.0f
   }
 
   /**

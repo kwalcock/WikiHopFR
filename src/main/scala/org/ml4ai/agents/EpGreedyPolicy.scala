@@ -59,6 +59,6 @@ class EpGreedyPolicy(decay:Iterator[Double], network:DQN)(implicit rng:Random) e
 //      actionBuilder(actionIx, entityA, entityB)
 //    }
     // TODO: Implement in pytorch
-    ???
+    RandomAction
   }
 }
