@@ -75,33 +75,34 @@ object TrainFR extends App with LazyLogging{
                   }
               }
               ret
-          }
+          }.take(100) // Keith: Please look here. Ideally there will not be a take statement here and network.apply,
+                      // but I put it and teste it with multiple values with varying number of elements to reproduce the bug
         }.value()
       }
 
-    val updates = (rewards zip nextStateValues) map { case (r, q) => r + GAMMA*q}
-
-    val actions = miniBatch.map(_.action)
-
-    // Import this to make the code below more readable
-    import DQN.actionIndex
-
-    val targetStateValuesData =
-      // TODO Clean this, factor out the hard-coded num 2.
-      for(((action, tv), u) <- (actions zip stateValues.value().toSeq().grouped(2).toSeq).zip(updates) ) yield {
-        val ret = tv.toArray
-        ret(action) = u.toFloat // TODO: Select the correct action
-        ret
-      }
-
-    val targetStateValues = Expression.input(stateValues.dim(), FloatVector.Seq2FloatVector(targetStateValuesData.flatten.toSeq))
-
-    val loss = mseLoss(stateValues, targetStateValues)
-
-    //    ComputationGraph.forward(loss) // This might make the whole thing crash
-    ComputationGraph.backward(loss)
-
-    optimizer.update()
+//    val updates = (rewards zip nextStateValues) map { case (r, q) => r + GAMMA*q}
+//
+//    val actions = miniBatch.map(_.action)
+//
+//    // Import this to make the code below more readable
+//    import DQN.actionIndex
+//
+//    val targetStateValuesData =
+//      // TODO Clean this, factor out the hard-coded num 2.
+//      for(((action, tv), u) <- (actions zip stateValues.value().toSeq().grouped(2).toSeq).zip(updates) ) yield {
+//        val ret = tv.toArray
+//        ret(action) = u.toFloat // TODO: Select the correct action
+//        ret
+//      }
+//
+//    val targetStateValues = Expression.input(stateValues.dim(), FloatVector.Seq2FloatVector(targetStateValuesData.flatten.toSeq))
+//
+//    val loss = mseLoss(stateValues, targetStateValues)
+//
+//    //    ComputationGraph.forward(loss) // This might make the whole thing crash
+//    ComputationGraph.backward(loss)
+//
+//    optimizer.update()
   }
 
 
