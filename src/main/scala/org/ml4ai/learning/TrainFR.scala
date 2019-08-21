@@ -29,7 +29,7 @@ object TrainFR extends App with LazyLogging{
     */
   def updateParameters(network:DQN, trainer:Trainer)(implicit rng:Random):Unit = {
     // Sample a mini batch
-    val miniBatch = memory.sample(1000)
+    val miniBatch: Iterable[Transition] = memory.sample(1000)
 
     // TODO: Refactor this parameter
     val GAMMA = .9
@@ -38,22 +38,17 @@ object TrainFR extends App with LazyLogging{
     ComputationGraph.renew()
 
     // Get the states from the batch and the entities associated to the action taken on that transition
-    val states = miniBatch map { m => m.state}
-    val selectedEntities = miniBatch map {
-      tr =>
-        tr.action match {
-          case Exploration(single) => (single, single)
-          case ExplorationDouble(entityA, entityB) => (entityA, entityB)
-          case Exploitation(entityA, entityB) => (entityA, entityB)
-          case _ => throw new NotImplementedException
-        }
+    val selectedEntities: Iterable[(WikiHopState, Set[String], Set[String])] = miniBatch map { tr =>
+      tr.action match {
+        case Exploration(single) => (tr.state, single, single)
+        case ExplorationDouble(entityA, entityB) => (tr.state, entityA, entityB)
+        case Exploitation(entityA, entityB) => (tr.state, entityA, entityB)
+        case _ => throw new NotImplementedException
+      }
     }
 
     // Compute the state action values for all the actions of that (state, entities) argument
-    val stateValues = network((states zip selectedEntities) map { case(s, (ea, eb)) => (s, ea, eb) })
-
-    // Fetch the observed reward of that transition
-    val rewards = miniBatch map { _.reward }
+    val stateValues: Expression = network(selectedEntities) // may be important?
 
     // Fetch the resulting state of the transitions
     val nextStates = miniBatch map { m => m.nextState }
@@ -67,30 +62,6 @@ object TrainFR extends App with LazyLogging{
 
       triples // Could use take to change how soon it happens
     }.value()
-
-//    val updates = (rewards zip nextStateValues) map { case (r, q) => r + GAMMA*q}
-//
-//    val actions = miniBatch.map(_.action)
-//
-//    // Import this to make the code below more readable
-//    import DQN.actionIndex
-//
-//    val targetStateValuesData =
-//      // TODO Clean this, factor out the hard-coded num 2.
-//      for(((action, tv), u) <- (actions zip stateValues.value().toSeq().grouped(2).toSeq).zip(updates) ) yield {
-//        val ret = tv.toArray
-//        ret(action) = u.toFloat // TODO: Select the correct action
-//        ret
-//      }
-//
-//    val targetStateValues = Expression.input(stateValues.dim(), FloatVector.Seq2FloatVector(targetStateValuesData.flatten.toSeq))
-//
-//    val loss = mseLoss(stateValues, targetStateValues)
-//
-//    //    ComputationGraph.forward(loss) // This might make the whole thing crash
-//    ComputationGraph.backward(loss)
-//
-//    optimizer.update()
   }
 
 
