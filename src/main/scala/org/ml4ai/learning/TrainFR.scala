@@ -58,7 +58,6 @@ object TrainFR extends App with LazyLogging{
     // Fetch the resulting state of the transitions
     val nextStates = miniBatch map { m => m.nextState }
     val nextStateValues = // TODO figure out this correctly, this considers the state values of all the possible entity combinations, not just only of  the ones with the top entity
-      max{
         network{
           nextStates.flatMap{
             ns =>
@@ -78,7 +77,6 @@ object TrainFR extends App with LazyLogging{
           }.take(100) // Keith: Please look here. Ideally there will not be a take statement here and network.apply,
                       // but I put it and teste it with multiple values with varying number of elements to reproduce the bug
         }.value()
-      }
 
 //    val updates = (rewards zip nextStateValues) map { case (r, q) => r + GAMMA*q}
 //
