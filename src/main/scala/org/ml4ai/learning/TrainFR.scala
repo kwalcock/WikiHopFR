@@ -57,26 +57,16 @@ object TrainFR extends App with LazyLogging{
 
     // Fetch the resulting state of the transitions
     val nextStates = miniBatch map { m => m.nextState }
-    val nextStateValues = // TODO figure out this correctly, this considers the state values of all the possible entity combinations, not just only of  the ones with the top entity
-        network{
-          nextStates.flatMap{
-            ns =>
-              val entityPairs =
-                for {
-                  ea <- ns.candidateEntities.get
-                  eb <- ns.candidateEntities.get
-                } yield (ea, eb)
+    val nextStateValues = network {
+      val triples = for {
+        ns <- nextStates
+        e = ns.candidateEntities.get.distinct
+        ea <- e
+        eb <- e
+      } yield (ns, ea, eb)
 
-              val ret = entityPairs.toSet.map{
-                ep:(Set[String], Set[String]) =>
-                  ep match {
-                    case (ea, eb) => (ns, ea, eb)
-                  }
-              }
-              ret
-          }.take(100) // Keith: Please look here. Ideally there will not be a take statement here and network.apply,
-                      // but I put it and teste it with multiple values with varying number of elements to reproduce the bug
-        }.value()
+      triples // Could use take to change how soon it happens
+    }.value()
 
 //    val updates = (rewards zip nextStateValues) map { case (r, q) => r + GAMMA*q}
 //
