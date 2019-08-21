@@ -112,7 +112,7 @@ object TrainFR extends App with LazyLogging{
   val numEpisodes = WHConfig.Training.episodes
   val targetUpdate = WHConfig.Training.targetUpdate
 
-  Initialize.initialize()
+  Initialize.initialize(Map("random-seed" -> 2522620396L, "dynet-mem" -> "2048"))
   val params = new ParameterCollection()
   implicit val eh: EmbeddingsHelper = new EmbeddingsHelper(params)
   val network = new DQN(params, eh)
