@@ -44,7 +44,7 @@ class EpGreedyPolicy(decay:Iterator[Double], network:DQN)(implicit rng:Random) e
           entityA <- candidateEntities
           entityB <- candidateEntities
         } yield {
-          val actionVals = network((state, entityA, entityB)).value()
+          val actionVals = network((state, entityA, entityB))
           val (actionIx, actionValue) = (argMax(actionVals).head, max(actionVals).head)
           (actionIx, actionValue, entityA, entityB)
         }

@@ -1,6 +1,7 @@
 package org.ml4ai.learning
 
 import com.typesafe.scalalogging.LazyLogging
+import edu.cmu.dynet.Tensor
 import edu.cmu.dynet.{ComputationGraph, Expression, FloatVector, Initialize, ParameterCollection, RMSPropTrainer, Trainer}
 import org.ml4ai.{WHConfig, WikiHopInstance}
 import org.ml4ai.agents.{AgentObserver, EpGreedyPolicy, PolicyAgent}
@@ -47,21 +48,18 @@ object TrainFR extends App with LazyLogging{
       }
     }
 
-    // Compute the state action values for all the actions of that (state, entities) argument
-    val stateValues: Expression = network(selectedEntities) // may be important?
-
     // Fetch the resulting state of the transitions
-    val nextStates = miniBatch map { m => m.nextState }
-    val nextStateValues = network {
-      val triples = for {
-        ns <- nextStates
-        e = ns.candidateEntities.get.distinct
-        ea <- e
-        eb <- e
+    val nextStateValues: Tensor = network {
+      val triples: Iterable[(WikiHopState, Set[String], Set[String])] = for {
+        transition <- miniBatch
+        ns = transition.nextState
+        es = ns.candidateEntities.get.distinct
+        ea <- es
+        eb <- es
       } yield (ns, ea, eb)
 
       triples // Could use take to change how soon it happens
-    }.value()
+    }
   }
 
 

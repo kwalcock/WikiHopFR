@@ -18,9 +18,9 @@ class DQN(params:ParameterCollection, embeddingsHelper: EmbeddingsHelper) {
 
   ComputationGraph.renew()
 
-  def apply(input:(WikiHopState, Set[String], Set[String])): Expression = this(Seq(input))
+  def apply(input: (WikiHopState, Set[String], Set[String])): Tensor = this(Seq(input))
 
-  def apply(input:Iterable[(WikiHopState, Set[String], Set[String])]):Expression = {
+  def apply(input: Iterable[(WikiHopState, Set[String], Set[String])]): Tensor = {
 
     val inputVectors = input.toSeq map {
       case (state, entityA, entityB) =>
@@ -39,7 +39,10 @@ class DQN(params:ParameterCollection, embeddingsHelper: EmbeddingsHelper) {
     val X = Expression.parameter(pX)
     val c = Expression.parameter(pc)
 
-    X * Expression.tanh(W*inputMatrix + b) + c
+    val expr = X * Expression.tanh(W * inputMatrix + b) + c
+    val value = expr.value()
+
+    value
   }
 
   /**
